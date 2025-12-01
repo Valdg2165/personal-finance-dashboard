@@ -1,7 +1,5 @@
 {
   "name": "finance_software_dev",
-  "version": "1.0.0",
-  "description": "",
   "homepage": "https://github.com/Valdg2165/Finance_Software_Dev#readme",
   "bugs": {
     "url": "https://github.com/Valdg2165/Finance_Software_Dev/issues"
@@ -10,14 +8,17 @@
     "type": "git",
     "url": "git+https://github.com/Valdg2165/Finance_Software_Dev.git"
   },
-  "license": "ISC",
-  "author": "",
-  "main": "index.js",
+  "version": "1.0.0",
   "type": "module",
+  "main": "index.js",
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js"
   },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
   "dependencies": {
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
