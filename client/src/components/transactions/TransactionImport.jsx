@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import CreateAccount from '../accounts/CreateAccount';
 import { transactionAPI, accountAPI } from '../../services/api';
 import { Button } from '../ui/Button';
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card';
@@ -128,10 +129,21 @@ export default function TransactionImport() {
             </select>
           </div>
         ) : (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
-            <p className="text-sm text-yellow-800">
-              You need to create an account first. Go to Accounts to add one.
-            </p>
+          <div className="space-y-4">
+            <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
+              <p className="text-sm text-yellow-800">
+                No accounts found. Create one below to get started.
+              </p>
+            </div>
+            <CreateAccount onAccountCreated={() => {
+              // Refetch accounts
+              accountAPI.getAll().then(res => {
+                setAccounts(res.data.data);
+                if (res.data.data.length > 0) {
+                  setSelectedAccount(res.data.data[0]._id);
+                }
+              });
+            }} />
           </div>
         )}
 
