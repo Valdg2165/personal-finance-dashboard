@@ -14,7 +14,7 @@ export default function TransactionImport() {
   const [dragActive, setDragActive] = useState(false);
 
   // Fetch accounts on component mount
-  useState(() => {
+  useEffect(() => {
     const fetchAccounts = async () => {
       try {
         const response = await accountAPI.getAll();
