@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import CreateAccount from '../accounts/CreateAccount';
 import { transactionAPI, accountAPI } from '../../services/api';
 import { Button } from '../ui/Button';
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card';
 import { Upload, FileText, CheckCircle, AlertCircle } from 'lucide-react';
+import CreateAccount from '../accounts/CreateAccount';
 
 export default function TransactionImport() {
   const [file, setFile] = useState(null);
@@ -16,19 +16,20 @@ export default function TransactionImport() {
 
   // Fetch accounts on component mount
   useEffect(() => {
-    const fetchAccounts = async () => {
-      try {
-        const response = await accountAPI.getAll();
-        setAccounts(response.data.data);
-        if (response.data.data.length > 0) {
-          setSelectedAccount(response.data.data[0]._id);
-        }
-      } catch (err) {
-        console.error('Error fetching accounts:', err);
-      }
-    };
     fetchAccounts();
   }, []);
+
+  const fetchAccounts = async () => {
+    try {
+      const response = await accountAPI.getAll();
+      setAccounts(response.data.data);
+      if (response.data.data.length > 0) {
+        setSelectedAccount(response.data.data[0]._id);
+      }
+    } catch (err) {
+      console.error('Error fetching accounts:', err);
+    }
+  };
 
   const handleDrag = (e) => {
     e.preventDefault();
@@ -112,7 +113,7 @@ export default function TransactionImport() {
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Account Selection */}
+        {/* Account Selection or Creation */}
         {accounts.length > 0 ? (
           <div className="space-y-2">
             <label className="text-sm font-medium">Select Account</label>
@@ -131,90 +132,90 @@ export default function TransactionImport() {
         ) : (
           <div className="space-y-4">
             <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
-              <p className="text-sm text-yellow-800">
-                No accounts found. Create one below to get started.
+              <p className="text-sm text-yellow-800 font-medium mb-2">
+                No accounts found
+              </p>
+              <p className="text-xs text-yellow-700">
+                Create a bank account below to start importing transactions
               </p>
             </div>
-            <CreateAccount onAccountCreated={() => {
-              // Refetch accounts
-              accountAPI.getAll().then(res => {
-                setAccounts(res.data.data);
-                if (res.data.data.length > 0) {
-                  setSelectedAccount(res.data.data[0]._id);
-                }
-              });
-            }} />
+            <CreateAccount onAccountCreated={fetchAccounts} />
           </div>
         )}
 
-        {/* File Drop Zone */}
-        <div
-          onDragEnter={handleDrag}
-          onDragLeave={handleDrag}
-          onDragOver={handleDrag}
-          onDrop={handleDrop}
-          className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-            dragActive
-              ? 'border-primary bg-primary/5'
-              : 'border-gray-300 hover:border-gray-400'
-          }`}
-        >
-          <input
-            type="file"
-            id="file-upload"
-            accept=".csv,.xlsx,.xls"
-            onChange={handleFileInput}
-            className="hidden"
-          />
-          
-          <label htmlFor="file-upload" className="cursor-pointer">
-            <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-            <p className="text-sm text-gray-600 mb-2">
-              <span className="text-primary font-semibold">Click to upload</span> or drag and drop
-            </p>
-            <p className="text-xs text-gray-500">CSV or Excel files only</p>
-          </label>
+        {/* Only show upload section if accounts exist */}
+        {accounts.length > 0 && (
+          <>
+            {/* File Drop Zone */}
+            <div
+              onDragEnter={handleDrag}
+              onDragLeave={handleDrag}
+              onDragOver={handleDrag}
+              onDrop={handleDrop}
+              className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                dragActive
+                  ? 'border-primary bg-primary/5'
+                  : 'border-gray-300 hover:border-gray-400'
+              }`}
+            >
+              <input
+                type="file"
+                id="file-upload"
+                accept=".csv,.xlsx,.xls"
+                onChange={handleFileInput}
+                className="hidden"
+              />
+              
+              <label htmlFor="file-upload" className="cursor-pointer">
+                <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                <p className="text-sm text-gray-600 mb-2">
+                  <span className="text-primary font-semibold">Click to upload</span> or drag and drop
+                </p>
+                <p className="text-xs text-gray-500">CSV or Excel files only</p>
+              </label>
 
-          {file && (
-            <div className="mt-4 flex items-center justify-center gap-2 text-sm text-green-600">
-              <FileText className="h-4 w-4" />
-              <span>{file.name}</span>
+              {file && (
+                <div className="mt-4 flex items-center justify-center gap-2 text-sm text-green-600">
+                  <FileText className="h-4 w-4" />
+                  <span>{file.name}</span>
+                </div>
+              )}
             </div>
-          )}
-        </div>
 
-        {/* Error Message */}
-        {error && (
-          <div className="flex items-center gap-2 bg-destructive/10 text-destructive text-sm p-3 rounded-md">
-            <AlertCircle className="h-4 w-4" />
-            <span>{error}</span>
-          </div>
+            {/* Error Message */}
+            {error && (
+              <div className="flex items-center gap-2 bg-destructive/10 text-destructive text-sm p-3 rounded-md">
+                <AlertCircle className="h-4 w-4" />
+                <span>{error}</span>
+              </div>
+            )}
+
+            {/* Success Result */}
+            {result && (
+              <div className="bg-green-50 border border-green-200 rounded-md p-4">
+                <div className="flex items-center gap-2 text-green-800 mb-2">
+                  <CheckCircle className="h-5 w-5" />
+                  <span className="font-semibold">{result.message}</span>
+                </div>
+                <div className="text-sm text-green-700 space-y-1">
+                  <p>✅ Imported: {result.data.imported} transactions</p>
+                  <p>🔄 Duplicates: {result.data.duplicates}</p>
+                  <p>❌ Errors: {result.data.errors}</p>
+                  <p>💰 Account Balance: €{result.data.accountBalance.toFixed(2)}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Upload Button */}
+            <Button
+              onClick={handleUpload}
+              disabled={!file || !selectedAccount || uploading}
+              className="w-full"
+            >
+              {uploading ? 'Importing...' : 'Import Transactions'}
+            </Button>
+          </>
         )}
-
-        {/* Success Result */}
-        {result && (
-          <div className="bg-green-50 border border-green-200 rounded-md p-4">
-            <div className="flex items-center gap-2 text-green-800 mb-2">
-              <CheckCircle className="h-5 w-5" />
-              <span className="font-semibold">{result.message}</span>
-            </div>
-            <div className="text-sm text-green-700 space-y-1">
-              <p>✅ Imported: {result.data.imported} transactions</p>
-              <p>🔄 Duplicates: {result.data.duplicates}</p>
-              <p>❌ Errors: {result.data.errors}</p>
-              <p>💰 Account Balance: €{result.data.accountBalance.toFixed(2)}</p>
-            </div>
-          </div>
-        )}
-
-        {/* Upload Button */}
-        <Button
-          onClick={handleUpload}
-          disabled={!file || !selectedAccount || uploading}
-          className="w-full"
-        >
-          {uploading ? 'Importing...' : 'Import Transactions'}
-        </Button>
       </CardContent>
     </Card>
   );
