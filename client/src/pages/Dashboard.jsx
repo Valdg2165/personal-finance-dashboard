@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import StatsCards from '../components/dashboard/StatsCards';
 import TransactionImport from '../components/transactions/TransactionImport';
+import ConnectBank from '../components/bank/ConnectBank';
 import TransactionList from '../components/transactions/TransactionList';
 import SpendingTrendChart from '../components/dashboard/SpendingTrendChart';
 import CategoryBreakdownChart from '../components/dashboard/CategoryBreakdownChart';
@@ -55,8 +56,9 @@ export default function Dashboard() {
         {/* Import & Transactions Section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Import Section */}
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 space-y-4">
             <TransactionImport />
+            <ConnectBank />
           </div>
 
           {/* Transactions List */}

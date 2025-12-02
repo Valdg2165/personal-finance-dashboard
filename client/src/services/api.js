@@ -47,4 +47,11 @@ export const transactionAPI = {
   },
 };
 
+// Add TrueLayer API
+export const truelayerAPI = {
+  connect: () => api.post('/truelayer/connect'),
+  syncAccounts: (data) => api.post('/truelayer/sync-accounts', data),
+  syncTransactions: (accountId) => api.post(`/truelayer/sync-transactions/${accountId}`),
+};
+
 export default api;
