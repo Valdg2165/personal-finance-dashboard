@@ -7,7 +7,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card';
 export default function SpendingTrendChart() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [period, setPeriod] = useState('30days');
+  const [period, setPeriod] = useState('all');
 
   useEffect(() => {
     fetchData();
@@ -22,7 +22,7 @@ export default function SpendingTrendChart() {
   const fetchData = async () => {
     try {
       const response = await transactionAPI.getAll();
-      const transactions = response.data.data || [];
+      let transactions = response.data.data || [];
 
       if (transactions.length === 0) {
         setData([]);
@@ -30,67 +30,49 @@ export default function SpendingTrendChart() {
         return;
       }
 
-      // Get date range based on actual transaction dates
-      const transactionDates = transactions.map(t => new Date(t.date).getTime());
-      const oldestDate = new Date(Math.min(...transactionDates));
-      const newestDate = new Date(Math.max(...transactionDates));
-      
-      // Calculate period start date
-      let startDate;
-      if (period === 'all') {
-        startDate = oldestDate;
-      } else {
-        const daysAgo = period === '7days' ? 7 : period === '30days' ? 30 : 90;
-        // Use the newest transaction date as reference, not today
-        startDate = new Date(newestDate.getTime() - daysAgo * 24 * 60 * 60 * 1000);
-        
-        // If start date is before oldest transaction, use all data
-        if (startDate < oldestDate) {
-          startDate = oldestDate;
-        }
-      }
+      // Sort transactions by date
+      transactions.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-      // Filter transactions by date range
-      const filteredTransactions = transactions.filter(t => 
-        new Date(t.date) >= startDate
-      );
+      // Filter by period if not "all"
+      if (period !== 'all') {
+        const daysToShow = period === '7days' ? 7 : period === '30days' ? 30 : 90;
+        const mostRecentDate = new Date(transactions[transactions.length - 1].date);
+        const cutoffDate = new Date(mostRecentDate);
+        cutoffDate.setDate(cutoffDate.getDate() - daysToShow);
+        
+        transactions = transactions.filter(t => new Date(t.date) >= cutoffDate);
+      }
 
       // Group by date
       const groupedByDate = {};
-      filteredTransactions.forEach(transaction => {
-        const date = new Date(transaction.date).toLocaleDateString('fr-FR', {
-          day: '2-digit',
-          month: 'short',
-          year: 'numeric'
+      transactions.forEach(transaction => {
+        const dateObj = new Date(transaction.date);
+        const dateKey = dateObj.toISOString().split('T')[0]; // YYYY-MM-DD
+        const displayDate = dateObj.toLocaleDateString('fr-FR', {
+          day: 'numeric',
+          month: 'short'
         });
         
-        if (!groupedByDate[date]) {
-          groupedByDate[date] = { date, income: 0, expenses: 0 };
+        if (!groupedByDate[dateKey]) {
+          groupedByDate[dateKey] = { 
+            date: displayDate, 
+            sortDate: dateKey,
+            income: 0, 
+            expenses: 0 
+          };
         }
         
         if (transaction.type === 'income') {
-          groupedByDate[date].income += transaction.amount;
+          groupedByDate[dateKey].income += transaction.amount;
         } else {
-          groupedByDate[date].expenses += transaction.amount;
+          groupedByDate[dateKey].expenses += transaction.amount;
         }
       });
 
-      // Convert to array and sort by date
-      const chartData = Object.values(groupedByDate).sort((a, b) => {
-        // Parse French date format
-        const parseDate = (dateStr) => {
-          const months = {
-            'janv.': 0, 'févr.': 1, 'mars': 2, 'avr.': 3, 'mai': 4, 'juin': 5,
-            'juil.': 6, 'août': 7, 'sept.': 8, 'oct.': 9, 'nov.': 10, 'déc.': 11
-          };
-          const parts = dateStr.split(' ');
-          const day = parseInt(parts[0]);
-          const month = months[parts[1]] || 0;
-          const year = parseInt(parts[2]);
-          return new Date(year, month, day);
-        };
-        return parseDate(a.date) - parseDate(b.date);
-      });
+      // Convert to array and sort
+      const chartData = Object.values(groupedByDate).sort((a, b) => 
+        a.sortDate.localeCompare(b.sortDate)
+      );
 
       setData(chartData);
     } catch (error) {
@@ -166,15 +148,12 @@ export default function SpendingTrendChart() {
           </p>
         ) : (
           <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={data}>
+            <LineChart data={data} margin={{ bottom: 20, left: 10, right: 10 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
               <XAxis 
                 dataKey="date" 
                 tick={{ fontSize: 11 }}
                 stroke="#6b7280"
-                angle={-45}
-                textAnchor="end"
-                height={80}
               />
               <YAxis 
                 tick={{ fontSize: 12 }}
@@ -196,7 +175,6 @@ export default function SpendingTrendChart() {
                 strokeWidth={2}
                 dot={{ fill: '#10b981', r: 4 }}
                 name="Income"
-                animationDuration={1000}
               />
               <Line 
                 type="monotone" 
@@ -205,7 +183,6 @@ export default function SpendingTrendChart() {
                 strokeWidth={2}
                 dot={{ fill: '#ef4444', r: 4 }}
                 name="Expenses"
-                animationDuration={1000}
               />
             </LineChart>
           </ResponsiveContainer>
