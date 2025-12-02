@@ -5,8 +5,6 @@ import connectDB from './config/db.js';
 import authRoutes from './routes/authRoutes.js';
 import accountRoutes from './routes/accountRoutes.js';
 import transactionRoutes from './routes/transactionRoutes.js';
-import gocardlessRoutes from './routes/gocardlessRoutes.js'; // ADD THIS
-import { initGoCardless } from './services/gocardlessService.js'; // ADD THIS
 
 dotenv.config();
 
@@ -24,16 +22,10 @@ app.get('/api/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/accounts', accountRoutes);
 app.use('/api/transactions', transactionRoutes);
-app.use('/api/gocardless', gocardlessRoutes); // ADD THIS
 
 const PORT = process.env.PORT || 3000;
 
-// Connect to MongoDB and GoCardless, then start server
-connectDB().then(async () => {
-  try {
-    await initGoCardless(); // ADD THIS
-  } catch (error) {
-    console.log('GoCardless not configured');
-  }
+// Connect to MongoDB, then start server
+connectDB().then(() => {
   app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 });
