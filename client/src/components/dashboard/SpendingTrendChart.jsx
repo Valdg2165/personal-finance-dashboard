@@ -30,10 +30,8 @@ export default function SpendingTrendChart() {
         return;
       }
 
-      // Sort transactions by date
       transactions.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-      // Filter by period if not "all"
       if (period !== 'all') {
         const daysToShow = period === '7days' ? 7 : period === '30days' ? 30 : 90;
         const mostRecentDate = new Date(transactions[transactions.length - 1].date);
@@ -43,11 +41,10 @@ export default function SpendingTrendChart() {
         transactions = transactions.filter(t => new Date(t.date) >= cutoffDate);
       }
 
-      // Group by date
       const groupedByDate = {};
       transactions.forEach(transaction => {
         const dateObj = new Date(transaction.date);
-        const dateKey = dateObj.toISOString().split('T')[0]; // YYYY-MM-DD
+        const dateKey = dateObj.toISOString().split('T')[0];
         const displayDate = dateObj.toLocaleDateString('fr-FR', {
           day: 'numeric',
           month: 'short'
@@ -69,7 +66,6 @@ export default function SpendingTrendChart() {
         }
       });
 
-      // Convert to array and sort
       const chartData = Object.values(groupedByDate).sort((a, b) => 
         a.sortDate.localeCompare(b.sortDate)
       );
@@ -141,14 +137,17 @@ export default function SpendingTrendChart() {
           </div>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent style={{ paddingBottom: '0.5rem', paddingTop: '0.5rem' }}>
         {data.length === 0 ? (
           <p className="text-center text-muted-foreground py-8">
             No transactions available
           </p>
         ) : (
           <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={data} margin={{ bottom: 20, left: 10, right: 10 }}>
+            <LineChart 
+              data={data} 
+              margin={{ top: 10, right: 30, left: 0, bottom: 10 }}
+            >
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
               <XAxis 
                 dataKey="date" 
@@ -167,7 +166,12 @@ export default function SpendingTrendChart() {
                 }}
                 formatter={(value) => `€${value.toFixed(2)}`}
               />
-              <Legend />
+              <Legend 
+                wrapperStyle={{ 
+                  paddingTop: '5px',
+                  paddingBottom: '0px' 
+                }}
+              />
               <Line 
                 type="monotone" 
                 dataKey="income" 
