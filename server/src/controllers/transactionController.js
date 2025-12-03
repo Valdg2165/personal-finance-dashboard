@@ -166,7 +166,7 @@ export const importTransactions = async (req, res) => {
 // Get all transactions
 export const getTransactions = async (req, res) => {
   try {
-    const { accountId, startDate, endDate, category, type } = req.query;
+    const { accountId, startDate, endDate, category, type, limit = 100, page = 1 } = req.query;
     
     const filter = { user: req.user._id };
     
@@ -179,15 +179,26 @@ export const getTransactions = async (req, res) => {
       if (endDate) filter.date.$lte = new Date(endDate);
     }
 
-    const transactions = await Transaction.find(filter)
-      .populate('account', 'name type')
-      .populate('category', 'name icon color')
-      .sort('-date')
-      .limit(100);
+    const limitNum = parseInt(limit) || 100;
+    const pageNum = parseInt(page) || 1;
+    const skip = (pageNum - 1) * limitNum;
+
+    const [transactions, total] = await Promise.all([
+      Transaction.find(filter)
+        .populate('account', 'name type')
+        .populate('category', 'name icon color')
+        .sort('-date')
+        .limit(limitNum)
+        .skip(skip),
+      Transaction.countDocuments(filter)
+    ]);
 
     res.json({
       success: true,
       count: transactions.length,
+      total,
+      page: pageNum,
+      pages: Math.ceil(total / limitNum),
       data: transactions
     });
   } catch (error) {
@@ -221,7 +232,17 @@ export const getTransaction = async (req, res) => {
 // Update transaction (mainly for recategorization)
 export const updateTransaction = async (req, res) => {
   try {
-    const { category, notes, tags, description, amount, date } = req.body;
+    const { category, notes, tags, description, amount, date, type } = req.body;
+
+    // Get original transaction to check for amount/type changes
+    const originalTransaction = await Transaction.findOne({
+      _id: req.params.id,
+      user: req.user._id
+    });
+
+    if (!originalTransaction) {
+      return res.status(404).json({ message: 'Transaction not found' });
+    }
 
     const updateData = { categoryConfidence: 1.0 }; // Manual categorization = 100% confidence
     
@@ -229,8 +250,34 @@ export const updateTransaction = async (req, res) => {
     if (notes !== undefined) updateData.notes = notes;
     if (tags !== undefined) updateData.tags = tags;
     if (description) updateData.description = description;
-    if (amount) updateData.amount = amount;
+    if (amount !== undefined) updateData.amount = Math.abs(amount);
     if (date) updateData.date = date;
+    if (type) updateData.type = type;
+
+    // Update account balance if amount or type changed
+    if ((amount !== undefined && amount !== originalTransaction.amount) || 
+        (type && type !== originalTransaction.type)) {
+      const account = await Account.findById(originalTransaction.account);
+      if (account) {
+        // Reverse original transaction
+        if (originalTransaction.type === 'income') {
+          account.balance -= originalTransaction.amount;
+        } else {
+          account.balance += originalTransaction.amount;
+        }
+        
+        // Apply new transaction
+        const newAmount = amount !== undefined ? Math.abs(amount) : originalTransaction.amount;
+        const newType = type || originalTransaction.type;
+        if (newType === 'income') {
+          account.balance += newAmount;
+        } else {
+          account.balance -= newAmount;
+        }
+        
+        await account.save();
+      }
+    }
 
     const transaction = await Transaction.findOneAndUpdate(
       { _id: req.params.id, user: req.user._id },
@@ -240,15 +287,74 @@ export const updateTransaction = async (req, res) => {
       .populate('account', 'name type')
       .populate('category', 'name icon color');
 
-    if (!transaction) {
-      return res.status(404).json({ message: 'Transaction not found' });
-    }
-
     res.json({
       success: true,
       data: transaction
     });
   } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Create manual transaction
+export const createTransaction = async (req, res) => {
+  try {
+    const { accountId, categoryId, type, amount, currency, date, description, merchant, notes, tags } = req.body;
+
+    // Validate required fields
+    if (!accountId || !type || !amount || !date || !description) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
+
+    // Verify account belongs to user
+    const account = await Account.findOne({ _id: accountId, user: req.user._id });
+    if (!account) {
+      return res.status(404).json({ message: 'Account not found' });
+    }
+
+    // Verify category if provided
+    if (categoryId) {
+      const category = await Category.findOne({ _id: categoryId, user: req.user._id });
+      if (!category) {
+        return res.status(404).json({ message: 'Category not found' });
+      }
+    }
+
+    // Create transaction
+    const transaction = await Transaction.create({
+      user: req.user._id,
+      account: accountId,
+      category: categoryId || null,
+      type,
+      amount: Math.abs(amount),
+      currency: currency || account.currency || 'EUR',
+      date: new Date(date),
+      description,
+      merchant: merchant ? { name: merchant } : undefined,
+      notes,
+      tags,
+      categoryConfidence: categoryId ? 1.0 : 0 // Manual categorization = 100% confidence
+    });
+
+    // Update account balance
+    if (type === 'income') {
+      account.balance += Math.abs(amount);
+    } else {
+      account.balance -= Math.abs(amount);
+    }
+    await account.save();
+
+    // Populate and return
+    const populatedTransaction = await Transaction.findById(transaction._id)
+      .populate('account', 'name type')
+      .populate('category', 'name icon color');
+
+    res.status(201).json({
+      success: true,
+      data: populatedTransaction
+    });
+  } catch (error) {
+    console.error('Create transaction error:', error);
     res.status(500).json({ message: error.message });
   }
 };

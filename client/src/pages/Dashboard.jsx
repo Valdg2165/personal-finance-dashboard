@@ -1,22 +1,29 @@
+import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import StatsCards from '../components/dashboard/StatsCards';
 import TransactionImport from '../components/transactions/TransactionImport';
+import CreateTransaction from '../components/transactions/CreateTransaction';
 import ConnectBank from '../components/bank/ConnectBank';
 import TransactionList from '../components/transactions/TransactionList';
 import SpendingTrendChart from '../components/dashboard/SpendingTrendChart';
 import CategoryBreakdownChart from '../components/dashboard/CategoryBreakdownChart';
 import MonthlyComparisonChart from '../components/dashboard/MonthlyComparisonChart';
-import { LogOut } from 'lucide-react';
+import { LogOut, Plus } from 'lucide-react';
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [showCreateTransaction, setShowCreateTransaction] = useState(false);
 
   const handleLogout = () => {
     logout();
     navigate('/login');
+  };
+
+  const handleTransactionCreated = () => {
+    setShowCreateTransaction(false);
   };
 
   return (
@@ -27,6 +34,14 @@ export default function Dashboard() {
           <div className="flex justify-between h-16 items-center">
             <h1 className="text-xl font-bold">💰 Finance Dashboard</h1>
             <div className="flex items-center gap-4">
+              <Button 
+                size="sm" 
+                onClick={() => setShowCreateTransaction(!showCreateTransaction)}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                New Transaction
+              </Button>
               <span className="text-sm text-muted-foreground">
                 Welcome, {user?.firstName}!
               </span>
@@ -57,7 +72,14 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Import Section */}
           <div className="lg:col-span-1 space-y-4">
-            <TransactionImport />
+            {showCreateTransaction ? (
+              <CreateTransaction 
+                onTransactionCreated={handleTransactionCreated}
+                onCancel={() => setShowCreateTransaction(false)}
+              />
+            ) : (
+              <TransactionImport />
+            )}
             <ConnectBank />
           </div>
 

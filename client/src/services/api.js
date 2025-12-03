@@ -36,6 +36,7 @@ export const accountAPI = {
 export const transactionAPI = {
   getAll: (params) => api.get('/transactions', { params }),
   getOne: (id) => api.get(`/transactions/${id}`),
+  create: (data) => api.post('/transactions', data),
   update: (id, data) => api.put(`/transactions/${id}`, data),
   delete: (id) => api.delete(`/transactions/${id}`),
   import: (formData) => {
@@ -45,6 +46,11 @@ export const transactionAPI = {
       },
     });
   },
+};
+
+// Category endpoints
+export const categoryAPI = {
+  getAll: (params) => api.get('/categories', { params }),
 };
 
 // Add TrueLayer API
