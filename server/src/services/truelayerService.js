@@ -24,13 +24,11 @@ export const initTrueLayer = async () => {
 
 // Generate auth link for user to connect bank
 export const getAuthLink = () => {
-  const scopes = ['info', 'accounts', 'balance', 'transactions', 'offline_access'];
-  
   const params = new URLSearchParams({
     response_type: 'code',
     client_id: clientId,
     redirect_uri: redirectUri,
-    scope: scopes.join(' '),
+    scope: 'info accounts balance transactions offline_access',
     providers: 'uk-ob-all uk-oauth-all',
   });
 

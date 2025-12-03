@@ -3,13 +3,7 @@ import Account from '../models/Account.js';
 import Transaction from '../models/Transaction.js';
 import Category from '../models/Category.js';
 import { autoCategories } from '../utils/categorization.js';
-import crypto from 'crypto';
-
-// Generate import hash
-const generateImportHash = (transaction) => {
-  const data = `${transaction.date.toISOString()}-${transaction.amount}-${transaction.description}`;
-  return crypto.createHash('md5').update(data).digest('hex');
-};
+import { generateImportHash } from '../utils/fileParser.js';
 
 // Start bank connection flow
 export const connectBank = async (req, res) => {
@@ -80,7 +74,7 @@ export const syncAccounts = async (req, res) => {
           ? parseFloat(balances[0].current) 
           : 0;
         
-        // Create or update account
+        // Create or update account - use findOneAndUpdate with select to include tokens
         const account = await Account.findOneAndUpdate(
           { 
             externalId: acc.account_id, 
@@ -94,7 +88,7 @@ export const syncAccounts = async (req, res) => {
             balance: balance,
             externalId: acc.account_id,
             externalProvider: 'truelayer',
-            externalToken: accessToken, // Store for later use
+            externalToken: accessToken,
             externalRefreshToken: refreshToken,
             institution: {
               name: acc.provider?.display_name || 'Bank',
@@ -103,7 +97,7 @@ export const syncAccounts = async (req, res) => {
             lastSyncedAt: new Date(),
             isActive: true,
           },
-          { upsert: true, new: true }
+          { upsert: true, new: true, runValidators: true }
         );
         
         syncedAccounts.push(account);
@@ -136,7 +130,7 @@ export const syncTransactions = async (req, res) => {
       _id: accountId,
       user: req.user._id,
       externalProvider: 'truelayer',
-    });
+    }).select('+externalToken +externalRefreshToken');
     
     if (!account || !account.externalToken) {
       return res.status(404).json({ 

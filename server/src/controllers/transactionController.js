@@ -52,7 +52,7 @@ export const importTransactions = async (req, res) => {
     if (fileExtension === 'csv') {
       rawData = await parseCSV(req.file.buffer);
     } else if (fileExtension === 'xlsx' || fileExtension === 'xls') {
-      rawData = parseExcel(req.file.buffer);
+      rawData = await parseExcel(req.file.buffer); // Added await
     } else {
       return res.status(400).json({ message: 'Unsupported file format' });
     }
@@ -81,6 +81,12 @@ export const importTransactions = async (req, res) => {
           normalized = normalizeRevolutTransaction(row);
         } else {
           normalized = normalizeGenericTransaction(row);
+        }
+
+        // Validate date
+        if (!normalized.date || isNaN(normalized.date.getTime())) {
+          errors.push({ row, error: 'Invalid date' });
+          continue;
         }
 
         // Generate hash for deduplication
@@ -147,8 +153,8 @@ export const importTransactions = async (req, res) => {
         accountBalance: account.balance
       },
       details: {
-        duplicates: duplicates.slice(0, 5), // Show first 5 duplicates
-        errors: errors.slice(0, 5) // Show first 5 errors
+        duplicates: duplicates.slice(0, 5),
+        errors: errors.slice(0, 5)
       }
     });
   } catch (error) {
@@ -215,13 +221,24 @@ export const getTransaction = async (req, res) => {
 // Update transaction (mainly for recategorization)
 export const updateTransaction = async (req, res) => {
   try {
-    const { category, notes, tags } = req.body;
+    const { category, notes, tags, description, amount, date } = req.body;
+
+    const updateData = { categoryConfidence: 1.0 }; // Manual categorization = 100% confidence
+    
+    if (category) updateData.category = category;
+    if (notes !== undefined) updateData.notes = notes;
+    if (tags !== undefined) updateData.tags = tags;
+    if (description) updateData.description = description;
+    if (amount) updateData.amount = amount;
+    if (date) updateData.date = date;
 
     const transaction = await Transaction.findOneAndUpdate(
       { _id: req.params.id, user: req.user._id },
-      { category, notes, tags, categoryConfidence: 1.0 }, // Manual categorization = 100% confidence
+      updateData,
       { new: true, runValidators: true }
-    ).populate('category', 'name icon color');
+    )
+      .populate('account', 'name type')
+      .populate('category', 'name icon color');
 
     if (!transaction) {
       return res.status(404).json({ message: 'Transaction not found' });

@@ -8,16 +8,6 @@ export default function MonthlyComparisonChart() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  useEffect(() => {
-    const handleUpdate = () => fetchData();
-    window.addEventListener('transactionsUpdated', handleUpdate);
-    return () => window.removeEventListener('transactionsUpdated', handleUpdate);
-  }, []);
-
   const fetchData = async () => {
     try {
       const response = await transactionAPI.getAll();
@@ -67,6 +57,14 @@ export default function MonthlyComparisonChart() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchData();
+
+    const handleUpdate = () => fetchData();
+    window.addEventListener('transactionsUpdated', handleUpdate);
+    return () => window.removeEventListener('transactionsUpdated', handleUpdate);
+  }, []);
 
   if (loading) {
     return (

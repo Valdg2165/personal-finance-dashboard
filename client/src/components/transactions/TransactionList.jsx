@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { transactionAPI } from '../../services/api';
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card';
 import { formatCurrency } from '../../lib/utils';
-import { ArrowUpCircle, ArrowDownCircle } from 'lucide-react';
+import { ArrowUpCircle, ArrowDownCircle, Edit2 } from 'lucide-react';
+import TransactionEdit from './TransactionEdit';
 
 // Simple date formatter to avoid Intl issues
 const formatTransactionDate = (date) => {
@@ -23,10 +24,12 @@ export default function TransactionList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState('all');
+  const [editingTransaction, setEditingTransaction] = useState(null);
 
   const fetchTransactions = async () => {
     try {
       setError(null);
+      setLoading(true);
       const params = filter !== 'all' ? { type: filter } : {};
       const response = await transactionAPI.getAll(params);
       setTransactions(response.data.data || []);
@@ -40,9 +43,8 @@ export default function TransactionList() {
 
   useEffect(() => {
     fetchTransactions();
-  }, [filter]);
 
-  useEffect(() => {
+    // Listen for updates
     const handleUpdate = () => {
       fetchTransactions();
     };
@@ -72,119 +74,149 @@ export default function TransactionList() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle>Recent Transactions</CardTitle>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setFilter('all')}
-              className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                filter === 'all'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
-              }`}
-            >
-              All
-            </button>
-            <button
-              onClick={() => setFilter('income')}
-              className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                filter === 'income'
-                  ? 'bg-green-600 text-white'
-                  : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
-              }`}
-            >
-              Income
-            </button>
-            <button
-              onClick={() => setFilter('expense')}
-              className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                filter === 'expense'
-                  ? 'bg-red-600 text-white'
-                  : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
-              }`}
-            >
-              Expenses
-            </button>
+    <>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle>Recent Transactions</CardTitle>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setFilter('all')}
+                className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                  filter === 'all'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+                }`}
+              >
+                All
+              </button>
+              <button
+                onClick={() => setFilter('income')}
+                className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                  filter === 'income'
+                    ? 'bg-green-600 text-white'
+                    : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+                }`}
+              >
+                Income
+              </button>
+              <button
+                onClick={() => setFilter('expense')}
+                className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                  filter === 'expense'
+                    ? 'bg-red-600 text-white'
+                    : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+                }`}
+              >
+                Expenses
+              </button>
+            </div>
           </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {!transactions || transactions.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            <p>No transactions yet.</p>
-            <p className="text-sm mt-2">Import a CSV file to get started!</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {transactions.map((transaction) => {
-              // Safe rendering with fallbacks
-              const description = transaction.description || 'Unknown transaction';
-              const amount = transaction.amount || 0;
-              const currency = transaction.currency || 'EUR';
-              const type = transaction.type || 'expense';
-              
-              return (
-                <div
-                  key={transaction._id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`p-2 rounded-full ${
-                        type === 'income'
-                          ? 'bg-green-100 text-green-600'
-                          : 'bg-red-100 text-red-600'
-                      }`}
-                    >
-                      {type === 'income' ? (
-                        <ArrowUpCircle className="h-5 w-5" />
-                      ) : (
-                        <ArrowDownCircle className="h-5 w-5" />
-                      )}
-                    </div>
-                    <div>
-                      <p className="font-medium">{description}</p>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <span>{formatTransactionDate(transaction.date)}</span>
-                        {transaction.category && (
-                          <>
-                            <span>•</span>
-                            <span className="flex items-center gap-1">
-                              <span>{transaction.category.icon}</span>
-                              <span>{transaction.category.name}</span>
-                            </span>
-                          </>
+        </CardHeader>
+        <CardContent>
+          {!transactions || transactions.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <p>No transactions yet.</p>
+              <p className="text-sm mt-2">Import a CSV file to get started!</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {transactions.map((transaction) => {
+                const description = transaction.description || 'Unknown transaction';
+                const amount = transaction.amount || 0;
+                const currency = transaction.currency || 'EUR';
+                const type = transaction.type || 'expense';
+                
+                return (
+                  <div
+                    key={transaction._id}
+                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors group"
+                  >
+                    <div className="flex items-center gap-3 flex-1">
+                      <div
+                        className={`p-2 rounded-full ${
+                          type === 'income'
+                            ? 'bg-green-100 text-green-600'
+                            : 'bg-red-100 text-red-600'
+                        }`}
+                      >
+                        {type === 'income' ? (
+                          <ArrowUpCircle className="h-5 w-5" />
+                        ) : (
+                          <ArrowDownCircle className="h-5 w-5" />
                         )}
-                        {transaction.account && (
-                          <>
-                            <span>•</span>
-                            <span>{transaction.account.name}</span>
-                          </>
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium">{description}</p>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <span>{formatTransactionDate(transaction.date)}</span>
+                          {transaction.category && (
+                            <>
+                              <span>•</span>
+                              <span className="flex items-center gap-1">
+                                <span>{transaction.category.icon}</span>
+                                <span>{transaction.category.name}</span>
+                              </span>
+                            </>
+                          )}
+                          {transaction.account && (
+                            <>
+                              <span>•</span>
+                              <span>{transaction.account.name}</span>
+                            </>
+                          )}
+                        </div>
+                        {transaction.tags && transaction.tags.length > 0 && (
+                          <div className="flex gap-1 mt-1">
+                            {transaction.tags.map((tag, idx) => (
+                              <span
+                                key={idx}
+                                className="text-xs bg-secondary px-2 py-0.5 rounded-full"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
                         )}
                       </div>
                     </div>
+                    <div className="flex items-center gap-3">
+                      <div className="text-right">
+                        <p
+                          className={`font-semibold ${
+                            type === 'income' ? 'text-green-600' : 'text-red-600'
+                          }`}
+                        >
+                          {type === 'income' ? '+' : '-'}
+                          {formatCurrency(amount, currency)}
+                        </p>
+                        {transaction.categoryConfidence && transaction.categoryConfidence < 0.7 && (
+                          <p className="text-xs text-amber-600">Low confidence</p>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => setEditingTransaction(transaction)}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity p-2 hover:bg-accent rounded-md"
+                      >
+                        <Edit2 className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+                      </button>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p
-                      className={`font-semibold ${
-                        type === 'income' ? 'text-green-600' : 'text-red-600'
-                      }`}
-                    >
-                      {type === 'income' ? '+' : '-'}
-                      {formatCurrency(amount, currency)}
-                    </p>
-                    {transaction.categoryConfidence && transaction.categoryConfidence < 0.7 && (
-                      <p className="text-xs text-amber-600">Low confidence</p>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Edit Modal */}
+      {editingTransaction && (
+        <TransactionEdit
+          transaction={editingTransaction}
+          onClose={() => setEditingTransaction(null)}
+          onSaved={() => setEditingTransaction(null)}
+        />
+      )}
+    </>
   );
 }
