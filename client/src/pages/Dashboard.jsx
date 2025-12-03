@@ -6,6 +6,8 @@ import TransactionImport from '../components/transactions/TransactionImport';
 import TransactionList from '../components/transactions/TransactionList';
 import { LogOut } from 'lucide-react';
 
+
+
 export default function Dashboard() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -29,6 +31,12 @@ export default function Dashboard() {
               <Button variant="outline" size="sm" onClick={handleLogout}>
                 <LogOut className="h-4 w-4 mr-2" />
                 Logout
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => navigate('/budget')}>
+               Budget Manager
               </Button>
             </div>
           </div>
@@ -55,4 +63,6 @@ export default function Dashboard() {
       </main>
     </div>
   );
+
+  
 }

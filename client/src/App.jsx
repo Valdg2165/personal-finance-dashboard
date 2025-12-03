@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
+import BudgetManager from './pages/BudgetManager';
 
 // Protected Route wrapper
 const ProtectedRoute = ({ children }) => {
@@ -31,6 +32,12 @@ function App() {
             }
           />
           <Route path="/" element={<Navigate to="/dashboard" />} />
+          <Route path="/budget" element={
+            <ProtectedRoute>
+               <BudgetManager />
+            </ProtectedRoute>
+             }         
+            />
         </Routes>
       </Router>
     </AuthProvider>
