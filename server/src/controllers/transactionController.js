@@ -166,9 +166,14 @@ export const importTransactions = async (req, res) => {
 // Get all transactions
 export const getTransactions = async (req, res) => {
   try {
-    const { accountId, startDate, endDate, category, type, limit = 100, page = 1 } = req.query;
+    const { accountId, startDate, endDate, category, type, limit = 100, page = 1, search } = req.query;
     
     const filter = { user: req.user._id };
+    
+    // Full-text search
+    if (search && search.trim()) {
+      filter.$text = { $search: search.trim() };
+    }
     
     if (accountId) filter.account = accountId;
     if (category) filter.category = category;
@@ -183,11 +188,19 @@ export const getTransactions = async (req, res) => {
     const pageNum = parseInt(page) || 1;
     const skip = (pageNum - 1) * limitNum;
 
+    // Build query with optional text score for search
+    let query = Transaction.find(filter);
+    
+    // If searching, add text score for relevance sorting
+    if (search && search.trim()) {
+      query = query.select({ score: { $meta: 'textScore' } });
+    }
+
     const [transactions, total] = await Promise.all([
-      Transaction.find(filter)
+      query
         .populate('account', 'name type')
         .populate('category', 'name icon color')
-        .sort('-date')
+        .sort(search && search.trim() ? { score: { $meta: 'textScore' }, date: -1 } : '-date')
         .limit(limitNum)
         .skip(skip),
       Transaction.countDocuments(filter)
@@ -199,7 +212,8 @@ export const getTransactions = async (req, res) => {
       total,
       page: pageNum,
       pages: Math.ceil(total / limitNum),
-      data: transactions
+      data: transactions,
+      searchQuery: search || null
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

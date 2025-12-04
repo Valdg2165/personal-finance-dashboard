@@ -39,6 +39,7 @@ export const transactionAPI = {
   create: (data) => api.post('/transactions', data),
   update: (id, data) => api.put(`/transactions/${id}`, data),
   delete: (id) => api.delete(`/transactions/${id}`),
+  search: (query, params = {}) => api.get('/transactions', { params: { ...params, search: query } }),
   import: (formData) => {
     return api.post('/transactions/import', formData, {
       headers: {

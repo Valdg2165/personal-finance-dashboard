@@ -71,3 +71,18 @@ export const formatRelativeTime = (date) => {
     return 'Unknown';
   }
 };
+
+export const highlightText = (text, query) => {
+  if (!query || !text) return text;
+  
+  try {
+    const parts = text.split(new RegExp(`(${query})`, 'gi'));
+    return parts.map((part, index) => 
+      part.toLowerCase() === query.toLowerCase() 
+        ? `<mark class="bg-yellow-200 dark:bg-yellow-800 px-1 rounded">${part}</mark>`
+        : part
+    ).join('');
+  } catch (error) {
+    return text;
+  }
+};
