@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import StatsCards from '../components/dashboard/StatsCards';
@@ -10,10 +11,11 @@ import TransactionList from '../components/transactions/TransactionList';
 import SpendingTrendChart from '../components/dashboard/SpendingTrendChart';
 import CategoryBreakdownChart from '../components/dashboard/CategoryBreakdownChart';
 import MonthlyComparisonChart from '../components/dashboard/MonthlyComparisonChart';
-import { LogOut, Plus } from 'lucide-react';
+import { LogOut, Plus, Sun, Moon } from 'lucide-react';
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [showCreateTransaction, setShowCreateTransaction] = useState(false);
 
@@ -27,24 +29,37 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Navigation */}
-      <nav className="bg-white border-b sticky top-0 z-10">
+      <nav className="bg-card border-b sticky top-0 z-10 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
             <h1 className="text-xl font-bold">💰 Finance Dashboard</h1>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
               <Button 
                 size="sm" 
                 onClick={() => setShowCreateTransaction(!showCreateTransaction)}
-                className="bg-green-600 hover:bg-green-700"
+                className="bg-green-600 hover:bg-green-700 text-white"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 New Transaction
               </Button>
-              <span className="text-sm text-muted-foreground">
+              <span className="text-sm text-muted-foreground hidden sm:inline">
                 Welcome, {user?.firstName}!
               </span>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={toggleTheme}
+                className="p-2"
+                title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              >
+                {theme === 'dark' ? (
+                  <Sun className="h-4 w-4" />
+                ) : (
+                  <Moon className="h-4 w-4" />
+                )}
+              </Button>
               <Button variant="outline" size="sm" onClick={handleLogout}>
                 <LogOut className="h-4 w-4 mr-2" />
                 Logout
