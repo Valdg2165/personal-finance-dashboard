@@ -32,6 +32,11 @@ const budgetSchema = new mongoose.Schema({
     max: 100,
     default: 80 // Alert at 80% of budget
   },
+
+  alertSent: {
+    type: Boolean,
+    default: false
+  },
   isActive: {
     type: Boolean,
     default: true

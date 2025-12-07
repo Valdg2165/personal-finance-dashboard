@@ -11,6 +11,9 @@ import {
   generateImportHash
 } from '../utils/fileParser.js';
 import { autoCategories } from '../utils/categorization.js';
+import { checkBudgetAlerts } from '../utils/budgetAlerts.js';
+
+
 
 // Configure multer for memory storage
 const upload = multer({
@@ -35,6 +38,7 @@ export const importTransactions = async (req, res) => {
   try {
     const { accountId } = req.body;
     
+
     if (!req.file) {
       return res.status(400).json({ message: 'No file uploaded' });
     }
@@ -65,8 +69,8 @@ export const importTransactions = async (req, res) => {
     const headers = Object.keys(rawData[0]);
     const bankFormat = detectBankFormat(headers);
     
-    // Get user's categories for auto-categorization (exclude budget-only categories)
-    const categories = await Category.find({ user: req.user._id, budgetOnly: { $ne: true } });
+    // Get user's categories for auto-categorization
+    const categories = await Category.find({ user: req.user._id });
 
     // Normalize and process transactions
     const transactions = [];
@@ -135,7 +139,15 @@ export const importTransactions = async (req, res) => {
       
       account.balance = account.balance + totalIncome - totalExpense;
       await account.save();
+
+
+
+      // Check budget alerts after importing transactions
+      checkBudgetAlerts(req.user._id).catch(err => 
+        console.error('Error checking budget alerts:', err)
+      );
     }
+
 
     res.json({
       success: true,

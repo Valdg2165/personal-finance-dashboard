@@ -9,6 +9,8 @@ import StatsCards from '../components/dashboard/StatsCards';
 import { LogOut } from 'lucide-react';
 
 
+
+
 export default function BudgetPage() {
   const { user, logout } = useAuth();
   const [budgets, setBudgets] = useState([]);
@@ -19,6 +21,7 @@ export default function BudgetPage() {
     amount: '',
     startDate: new Date().toISOString().split('T')[0]
   });
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [editingBudget, setEditingBudget] = useState(null);
@@ -26,8 +29,10 @@ export default function BudgetPage() {
   
   const categories = [
     { name: 'Global', emoji: '🪙' },
+
     { name: 'Housing', emoji: '🏠' },
     { name: 'Transportation', emoji: '🚗' },
+
     { name: 'Food & Dining', emoji: '🍔' },
     { name: 'Groceries', emoji: '🛒' },
     { name: 'Shopping', emoji: '🛍️' },
@@ -48,6 +53,7 @@ export default function BudgetPage() {
     navigate('/login');
   };
 
+
   // Load budgets on component mount
   useEffect(() => {
     fetchBudgets();
@@ -59,6 +65,7 @@ export default function BudgetPage() {
       const response = await budgetAPI.getAll();
       setBudgets(response.data);
       setError(null);
+
     } catch (err) {
       console.error('Error fetching budgets:', err);
       setError('Failed to load budgets');
@@ -70,12 +77,16 @@ export default function BudgetPage() {
   const getTimeRemaining = (budget) => {
     const endDate = new Date(budget.createdAt);
     endDate.setMonth(endDate.getMonth() + parseInt(budget.period));
+
     const now = new Date();
     const diffMs = endDate - now;
 
+
     const totalDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
     const months = Math.floor(totalDays / 30);
+
     const days = totalDays % 30;
+
 
     let result = '';
     if (months > 0) result += `${months} m `;
@@ -89,6 +100,7 @@ export default function BudgetPage() {
     if (budget.remaining !== undefined) {
       return budget.remaining;
     }
+
     // Sinon, utiliser amount - spent si disponible
     if (budget.spent !== undefined) {
       return budget.amount - budget.spent;
@@ -100,6 +112,7 @@ export default function BudgetPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+
       if (editingBudget) {
         // Update existing budget
         const response = await budgetAPI.update(editingBudget._id, form);
@@ -108,11 +121,13 @@ export default function BudgetPage() {
       } else {
         // Create new budget
         const response = await budgetAPI.create(form);
+
         setBudgets([...budgets, response.data]);
       }
       setForm({ category: '', period: '', amount: '' });
       setOpen(false);
       setError(null);
+
       // Refresh budgets to get updated spent amounts
       fetchBudgets();
     } catch (err) {
@@ -124,9 +139,11 @@ export default function BudgetPage() {
   const handleEdit = (budget) => {
     const categoryName = budget.category?.name || budget.category;
     let periodMonths = 1;
+
     if (budget.startDate && budget.endDate) {
       const start = new Date(budget.startDate);
       const end = new Date(budget.endDate);
+
       periodMonths = Math.round((end - start) / (1000 * 60 * 60 * 24 * 30));
     }
     
@@ -146,8 +163,10 @@ export default function BudgetPage() {
       return;
     }
     
+
     try {
       await budgetAPI.delete(budgetId);
+
       setBudgets(budgets.filter(b => b._id !== budgetId));
       setError(null);
     } catch (err) {
@@ -159,14 +178,18 @@ export default function BudgetPage() {
 
   const handleClosePanel = () => {
     setOpen(false);
+
     setEditingBudget(null);
     setForm({ 
       category: '', 
       period: '', 
+
       amount: '',
       startDate: new Date().toISOString().split('T')[0]
     });
   };
+
+
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -202,6 +225,7 @@ export default function BudgetPage() {
         {/* Stats Cards */}
         <StatsCards />
         
+
         {/* Error message */}
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded mb-4">
@@ -214,6 +238,7 @@ export default function BudgetPage() {
           <div className="flex justify-center items-center h-96">
             <p className="text-center text-gray-500 text-xl font-medium">Loading budgets...</p>
           </div>
+
         ) : budgets.length === 0 ? (
           <div className="flex justify-center items-center h-96">
             <p className="text-center text-gray-500 text-xl font-medium">
@@ -226,6 +251,7 @@ export default function BudgetPage() {
               const categoryName = b.category?.name || b.category;
               const category = categories.find(c => c.name === categoryName);
               
+
               // Calculate period in months from dates if available
               let periodMonths = 1;
               if (b.startDate && b.endDate) {
@@ -236,9 +262,11 @@ export default function BudgetPage() {
               
               const budgetWithPeriod = { ...b, period: periodMonths, createdAt: b.startDate || b.createdAt };
               const remaining = calculateRemaining(budgetWithPeriod);
+
               const remainingPercent = (remaining / b.amount) * 100;
               const remainingColor = remainingPercent < 20 ? 'text-red-500' : 'text-green-500';
               
+
               return (
                 <Card key={b._id || i} className="p-6 flex flex-col justify-center items-center min-h-48 h-auto shadow-lg text-center relative z-40">                
                   {/* Three dots menu */}
@@ -246,6 +274,7 @@ export default function BudgetPage() {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
+
                         setDropdownOpen(dropdownOpen === b._id ? null : b._id);
                       }}
                       className="text-gray-500 hover:text-gray-700 focus:outline-none"
@@ -258,9 +287,11 @@ export default function BudgetPage() {
                     {/* Dropdown menu */}
                     {dropdownOpen === b._id && (
                       <div className="absolute right-0 mt-2 w-32 bg-white rounded-md shadow-lg z-10 border border-gray-200">
+
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
+
                             handleEdit(b);
                           }}
                           className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -270,6 +301,7 @@ export default function BudgetPage() {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
+
                             handleDelete(b._id);
                           }}
                           className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
@@ -291,6 +323,7 @@ export default function BudgetPage() {
                         ? `${Math.floor(periodMonths / 12)} year${periodMonths >= 24 ? 's' : ''}`
                         : `${periodMonths} month${periodMonths === 1 ? '' : 's'}`}
                     </p>
+
                     <p className="text-sm text-gray-600 font-medium mt-1">
                       End: {b.endDate ? new Date(b.endDate).toLocaleDateString() : 'N/A'}
                     </p>
@@ -301,12 +334,14 @@ export default function BudgetPage() {
                     {/* Budget amount */}
                     <p className="mt-3 text-3xl font-bold">{b.amount}€</p>
                     
+
                     {/* Spent amount */}
                     {b.spent !== undefined && (
                       <p className="text-sm text-gray-600 mt-1">
                         {b.spent.toFixed(2)}€ spent
                       </p>
                     )}
+
                     
                     {/* Remaining amount with color */}
                     <p className={`mt-2 font-bold text-lg ${remainingColor}`}>
@@ -316,6 +351,7 @@ export default function BudgetPage() {
                     {/* Progress bar */}
                     {b.spent !== undefined && (
                       <div className="w-full mt-3">
+
                         <div className="w-full bg-gray-200 rounded-full h-2">
                           <div 
                             className={`h-2 rounded-full ${remainingPercent > 50 ? 'bg-green-500' : remainingPercent > 20 ? 'bg-yellow-500' : 'bg-red-500'}`}
@@ -342,21 +378,25 @@ export default function BudgetPage() {
           style={{ 
             position: 'fixed', 
             right: 0, 
+
             top: 0, 
             width: '320px', 
             height: '100vh', 
             backgroundColor: 'white', 
+
             borderLeft: '1px solid #e5e7eb',
             boxShadow: '-4px 0 6px -1px rgba(0, 0, 0, 0.1)',
             padding: '24px',
             zIndex: 9999 
           }}
         >
+
           <h2 className="text-xl font-bold">{editingBudget ? 'Edit Budget' : 'Add a Budget'}</h2>
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             {/* Category */}
             <div>
               <label className="text-sm font-medium mb-1 block">Category</label>
+
               <select
                 value={form.category}
                 onChange={(e) => setForm({ ...form, category: e.target.value })}
@@ -375,6 +415,7 @@ export default function BudgetPage() {
             {/* Start Date */}
             <div>
               <label className="text-sm font-medium mb-1 block">Start Date</label>
+
               <Input
                 type="date"
                 value={form.startDate}
@@ -382,6 +423,7 @@ export default function BudgetPage() {
                 required
               />
             </div>
+
 
             {/* Period */}
             <div>
@@ -413,11 +455,13 @@ export default function BudgetPage() {
             {/* Amount */}
             <div>
               <label className="text-sm font-medium mb-1 block">Amount</label>
+
               <Input
                 type="number"
                 value={form.amount}
                 onChange={(e) => {
                   let value = e.target.value;
+
 
                   // Supprime les caractères non numériques sauf le point
                   if (!/^\d*\.?\d*$/.test(value)) return;
@@ -428,6 +472,7 @@ export default function BudgetPage() {
                     if (decPart.length > 2) return;
                   }
 
+
                   // Met à jour le state
                   setForm({ ...form, amount: value });
                 }}
@@ -435,10 +480,12 @@ export default function BudgetPage() {
               />
             </div>
 
+
             {/* Buttons */}
             <Button type="submit" className="w-full">
               {editingBudget ? 'Update' : 'Create'}
             </Button>
+
             <Button variant="outline" type="button" className="w-full" onClick={handleClosePanel}>Cancel</Button>
           </form>
         </div>
@@ -446,3 +493,4 @@ export default function BudgetPage() {
     </div>
   );
 }
+

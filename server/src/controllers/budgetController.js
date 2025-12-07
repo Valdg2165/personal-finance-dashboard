@@ -2,12 +2,15 @@ import Budget from '../models/Budget.js';
 import Category from '../models/Category.js';
 import Transaction from '../models/Transaction.js';
 
+
+
 // Helper function to calculate spent amount for a budget
 const calculateBudgetSpent = async (budget) => {
   try {
     // For Global category, sum all expense transactions in the period
     const categoryDoc = await Category.findById(budget.category);
     
+
     let query = {
       user: budget.user,
       type: 'expense',
@@ -24,6 +27,7 @@ const calculateBudgetSpent = async (budget) => {
         user: budget.user, 
         name: categoryDoc.name 
       });
+
       const categoryIds = userCategories.map(c => c._id);
       query.category = { $in: categoryIds };
     }
@@ -43,9 +47,12 @@ export const createBudget = async (req, res) => {
   try {
     const { category, amount, period, startDate: startDateInput } = req.body;
 
+
+
     // Find category by name
     let categoryDoc = await Category.findOne({ name: category });
     
+
     if (!categoryDoc) {
       return res.status(400).json({ message: 'Category not found' });
     }
@@ -55,20 +62,25 @@ export const createBudget = async (req, res) => {
     const endDate = new Date(startDate);
     endDate.setMonth(endDate.getMonth() + parseInt(period));
 
+
     const budget = new Budget({
       user: req.user.id,
       category: categoryDoc._id,
+
       amount: parseFloat(amount),
       period: parseInt(period) >= 12 ? 'yearly' : 'monthly',
       startDate,
       endDate,
+
       isActive: true
     });
 
     await budget.save();
     
+
     // Populate category before sending response
     await budget.populate('category');
+
 
     res.status(201).json(budget);
   } catch (error) {
@@ -80,14 +92,16 @@ export const createBudget = async (req, res) => {
 // Get all budgets for the authenticated user
 export const getBudgets = async (req, res) => {
   try {
-    const budgets = await Budget.find({ user: req.user.id })
+    const budgets = await Budget.find({ user: req.user.id, isActive: true })
       .populate('category')
       .sort({ createdAt: -1 });
 
-    // Calculate spent amount for each budget
+
+    // Calculate spent and remaining for each budget
     const budgetsWithSpent = await Promise.all(
       budgets.map(async (budget) => {
         const spent = await calculateBudgetSpent(budget);
+
         return {
           ...budget.toObject(),
           spent,
@@ -95,6 +109,7 @@ export const getBudgets = async (req, res) => {
         };
       })
     );
+
 
     res.json(budgetsWithSpent);
   } catch (error) {
@@ -109,6 +124,7 @@ export const updateBudget = async (req, res) => {
     const { id } = req.params;
     const { category, amount, period, isActive, startDate: startDateInput } = req.body;
 
+
     const budget = await Budget.findOne({ _id: id, user: req.user.id });
 
     if (!budget) {
@@ -117,14 +133,17 @@ export const updateBudget = async (req, res) => {
 
     if (category) {
       const categoryDoc = await Category.findOne({ name: category });
+
       if (!categoryDoc) {
         return res.status(400).json({ message: 'Category not found' });
       }
       budget.category = categoryDoc._id;
     }
 
+
     if (amount !== undefined) budget.amount = parseFloat(amount);
     
+
     // Update startDate if provided
     if (startDateInput !== undefined) {
       budget.startDate = new Date(startDateInput);
@@ -133,14 +152,18 @@ export const updateBudget = async (req, res) => {
     if (period !== undefined) {
       const periodMonths = parseInt(period);
       budget.period = periodMonths >= 12 ? 'yearly' : 'monthly';
+
       budget.endDate = new Date(budget.startDate);
       budget.endDate.setMonth(budget.endDate.getMonth() + periodMonths);
     }
 
+
     if (isActive !== undefined) budget.isActive = isActive;
 
     await budget.save();
+
     await budget.populate('category');
+
 
     res.json(budget);
   } catch (error) {
@@ -154,15 +177,19 @@ export const deleteBudget = async (req, res) => {
   try {
     const { id } = req.params;
 
+
     const budget = await Budget.findOneAndDelete({ _id: id, user: req.user.id });
 
     if (!budget) {
       return res.status(404).json({ message: 'Budget not found' });
     }
 
+
     res.json({ message: 'Budget deleted successfully' });
+
   } catch (error) {
     console.error('Error deleting budget:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
+
