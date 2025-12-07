@@ -22,6 +22,10 @@ const categorySchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  budgetOnly: {
+    type: Boolean,
+    default: false
+  },
   parentCategory: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Category'

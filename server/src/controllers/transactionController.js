@@ -65,8 +65,8 @@ export const importTransactions = async (req, res) => {
     const headers = Object.keys(rawData[0]);
     const bankFormat = detectBankFormat(headers);
     
-    // Get user's categories for auto-categorization
-    const categories = await Category.find({ user: req.user._id });
+    // Get user's categories for auto-categorization (exclude budget-only categories)
+    const categories = await Category.find({ user: req.user._id, budgetOnly: { $ne: true } });
 
     // Normalize and process transactions
     const transactions = [];
