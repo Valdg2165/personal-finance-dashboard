@@ -52,7 +52,7 @@ const calculateBudgetSpent = async (budget) => {
 // Check all active budgets and send alerts if needed
 export const checkBudgetAlerts = async (userId) => {
   try {
-
+    console.log('Checking budget alerts for user:', userId);
 
     // Get all active budgets for the user
     const budgets = await Budget.find({ 
@@ -61,6 +61,8 @@ export const checkBudgetAlerts = async (userId) => {
 
       endDate: { $gte: new Date() } // Only check budgets that haven't ended
     }).populate('category');
+    
+    console.log(`   Found ${budgets.length} active budgets`);
 
 
     // Get user details for email
@@ -75,28 +77,40 @@ export const checkBudgetAlerts = async (userId) => {
     for (const budget of budgets) {
       const spent = await calculateBudgetSpent(budget);
       const percentage = (spent / budget.amount) * 100;
-
+      
+      console.log(`\nBudget: ${budget.category?.name || 'Unknown'}`);
+      console.log(`   Spent: €${spent.toFixed(2)} / €${budget.amount.toFixed(2)} (${percentage.toFixed(1)}%)`);
+      console.log(`   Threshold: ${budget.alertThreshold}%`);
+      console.log(`   Alert sent: ${budget.alertSent ? 'Yes' : 'No'}`);
 
       // If budget reached threshold and alert hasn't been sent yet
       if (percentage >= budget.alertThreshold && !budget.alertSent) {
+        console.log('   Alert threshold reached! Sending email...');
         const categoryName = budget.category?.name || 'Unknown';
         
 
         // Send email alert
-        const emailSent = await sendBudgetAlertEmail(user.email, user.firstName, {
-          categoryName,
-          spent,
-          total: budget.amount,
-          percentage: Math.round(percentage)
-        });
+        try {
+          const emailSent = await sendBudgetAlertEmail(user.email, user.firstName, {
+            categoryName,
+            spent,
+            total: budget.amount,
+            percentage: Math.round(percentage)
+          });
 
-        // Mark alert as sent
-        if (emailSent) {
-          budget.alertSent = true;
+          // Mark alert as sent
+          if (emailSent) {
+            budget.alertSent = true;
 
-          await budget.save();
+            await budget.save();
 
-          console.log(`Budget alert sent for ${categoryName} to ${user.email}`);
+            console.log(`   Budget alert marked as sent for ${categoryName}`);
+          } else {
+            console.log(`   Email send failed for ${categoryName}`);
+          }
+        } catch (emailError) {
+          console.error(`Failed to send budget alert email for ${categoryName}:`, emailError.message);
+          // Don't fail the entire process if email fails
         }
       }
 

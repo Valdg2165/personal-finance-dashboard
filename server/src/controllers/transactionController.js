@@ -338,6 +338,11 @@ export const updateTransaction = async (req, res) => {
       .populate('account', 'name type')
       .populate('category', 'name icon color');
 
+    // Check budget alerts after updating transaction
+    checkBudgetAlerts(req.user._id).catch(err => 
+      console.error('Error checking budget alerts:', err)
+    );
+
     res.json({
       success: true,
       data: transaction
@@ -394,6 +399,11 @@ export const createTransaction = async (req, res) => {
       account.balance -= Math.abs(amount);
     }
     await account.save();
+
+    // Check budget alerts after creating transaction
+    checkBudgetAlerts(req.user._id).catch(err => 
+      console.error('Error checking budget alerts:', err)
+    );
 
     // Populate and return
     const populatedTransaction = await Transaction.findById(transaction._id)

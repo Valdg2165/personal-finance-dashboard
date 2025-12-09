@@ -31,15 +31,19 @@ export default function TransactionList({ filters = {} }) {
   const [editingTransaction, setEditingTransaction] = useState(null);
   const searchTimeoutRef = useRef(null);
 
+  // Stringify filters to avoid dependency issues with object reference
+  const filtersString = JSON.stringify(filters);
+
   // MODIFICATION 2 : Inclure la prop 'filters' dans la logique de dépendance
   const fetchTransactions = useCallback(async () => {
+    const parsedFilters = JSON.parse(filtersString);
     try {
       setError(null);
       setLoading(true);
 
       // Fusion des filtres locaux et globaux (prop 'filters')
       const params = {
-        ...filters, // Filtres Date/Catégorie/etc. provenant du Dashboard
+        ...parsedFilters, // Filtres Date/Catégorie/etc. provenant du Dashboard
       };
       
       // Ajout des filtres gérés localement (Type et Recherche textuelle)
@@ -64,7 +68,7 @@ export default function TransactionList({ filters = {} }) {
     } finally {
       setLoading(false);
     }
-  }, [filter, searchQuery, filters]); // Ajout de 'filters' comme dépendance
+  }, [filter, searchQuery, filtersString]); // Use stringified version to avoid reference issues
 
   // MODIFICATION 3 : Déclenchement de la récupération lors du changement de 'filters'
   // On combine la dépendance à fetchTransactions avec la dépendance 'filters'
@@ -178,7 +182,7 @@ export default function TransactionList({ filters = {} }) {
             {/* Search Bar */}
             <form onSubmit={handleSearch} className="relative">
               <div className="relative">
-                {loading && searchQuery && (searchQuery.trim() === searchInput.trim()) ? (
+                {loading && searchQuery ? (
                   <Loader2 className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground animate-spin" />
                 ) : (
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />

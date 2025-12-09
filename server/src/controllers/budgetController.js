@@ -64,14 +64,14 @@ export const createBudget = async (req, res) => {
 
 
     const budget = new Budget({
-      user: req.user.id,
+      user: req.user._id,
       category: categoryDoc._id,
 
       amount: parseFloat(amount),
       period: parseInt(period) >= 12 ? 'yearly' : 'monthly',
       startDate,
       endDate,
-
+      alertSent: false,
       isActive: true
     });
 
@@ -92,7 +92,7 @@ export const createBudget = async (req, res) => {
 // Get all budgets for the authenticated user
 export const getBudgets = async (req, res) => {
   try {
-    const budgets = await Budget.find({ user: req.user.id, isActive: true })
+    const budgets = await Budget.find({ user: req.user._id, isActive: true })
       .populate('category')
       .sort({ createdAt: -1 });
 
@@ -125,7 +125,7 @@ export const updateBudget = async (req, res) => {
     const { category, amount, period, isActive, startDate: startDateInput } = req.body;
 
 
-    const budget = await Budget.findOne({ _id: id, user: req.user.id });
+    const budget = await Budget.findOne({ _id: id, user: req.user._id });
 
     if (!budget) {
       return res.status(404).json({ message: 'Budget not found' });
@@ -178,7 +178,7 @@ export const deleteBudget = async (req, res) => {
     const { id } = req.params;
 
 
-    const budget = await Budget.findOneAndDelete({ _id: id, user: req.user.id });
+    const budget = await Budget.findOneAndDelete({ _id: id, user: req.user._id });
 
     if (!budget) {
       return res.status(404).json({ message: 'Budget not found' });

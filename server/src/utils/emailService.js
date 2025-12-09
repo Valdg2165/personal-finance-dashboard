@@ -1,18 +1,35 @@
 import nodemailer from 'nodemailer';
 
-// Configure email transporter
-const transporter = nodemailer.createTransport({
-  service: 'gmail', // You can change this to your email provider
-  auth: {
-    user: process.env.EMAIL_USER || 'your-email@gmail.com',
-    pass: process.env.EMAIL_PASSWORD || 'your-app-password'
+// Function to check if email is configured (called lazily)
+const isEmailConfigured = () => {
+  return process.env.EMAIL_USER && process.env.EMAIL_PASSWORD;
+};
+
+// Function to get transporter (creates it lazily when needed)
+let transporter = null;
+const getTransporter = () => {
+  if (!transporter && isEmailConfigured()) {
+    console.log('Initializing email transporter with user:', process.env.EMAIL_USER);
+    transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASSWORD
+      }
+    });
   }
-});
+  return transporter;
+};
 
 
 
 // Send budget alert email
 export const sendBudgetAlertEmail = async (userEmail, userName, budgetDetails) => {
+  console.log('Attempting to send budget alert email...');
+  console.log('   To:', userEmail);
+  console.log('   User:', userName);
+  console.log('   Details:', budgetDetails);
+  
   const { categoryName, spent, total, percentage } = budgetDetails;
 
 
@@ -47,14 +64,28 @@ export const sendBudgetAlertEmail = async (userEmail, userName, budgetDetails) =
   };
 
   try {
-    await transporter.sendMail(mailOptions);
-    console.log(`Budget alert email sent to ${userEmail}`);
+    const emailTransporter = getTransporter();
+    
+    if (!emailTransporter) {
+      console.log('Email not configured, skipping alert email');
+      console.log('   EMAIL_USER:', process.env.EMAIL_USER ? 'Set' : 'Not set');
+      console.log('   EMAIL_PASSWORD:', process.env.EMAIL_PASSWORD ? 'Set' : 'Not set');
+      return false;
+    }
+    
+    console.log('Sending email via Gmail...');
+    const result = await emailTransporter.sendMail(mailOptions);
+    console.log('Budget alert email sent successfully!');
+    console.log('   Message ID:', result.messageId);
+    console.log('   Recipient:', userEmail);
     return true;
 
 
   } catch (error) {
-    console.error('Error sending budget alert email:', error);
-
+    console.error('Error sending budget alert email:');
+    console.error('   Error message:', error.message);
+    console.error('   Error code:', error.code);
+    console.error('   Full error:', error);
     return false;
   }
 };
