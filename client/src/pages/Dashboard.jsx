@@ -133,14 +133,7 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Import Section (Left Column) */}
           <div className="lg:col-span-1 space-y-4">
-            {showCreateTransaction ? (
-              <CreateTransaction 
-                onTransactionCreated={handleTransactionCreated}
-                onCancel={() => setShowCreateTransaction(false)}
-              />
-            ) : (
-              <TransactionImport />
-            )}
+            <TransactionImport />
             <ConnectBank />
           </div>
 
@@ -213,6 +206,24 @@ export default function Dashboard() {
           </div>
         </div>
       </main>
+
+      {/* Create Transaction Modal */}
+      {showCreateTransaction && (
+        <div 
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={() => setShowCreateTransaction(false)}
+        >
+          <div 
+            className="w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <CreateTransaction 
+              onTransactionCreated={handleTransactionCreated}
+              onCancel={() => setShowCreateTransaction(false)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 
