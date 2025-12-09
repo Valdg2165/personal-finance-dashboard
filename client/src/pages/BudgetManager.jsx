@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
@@ -56,12 +56,7 @@ export default function BudgetPage() {
   };
 
 
-  // Load budgets on component mount
-  useEffect(() => {
-    fetchBudgets();
-  }, []);
-
-  const fetchBudgets = async () => {
+  const fetchBudgets = useCallback(async () => {
     try {
       setLoading(true);
       const response = await budgetAPI.getAll();
@@ -74,7 +69,12 @@ export default function BudgetPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  // Load budgets on component mount
+  useEffect(() => {
+    fetchBudgets();
+  }, [fetchBudgets]);
 
   const getTimeRemaining = (budget) => {
     const endDate = new Date(budget.createdAt);

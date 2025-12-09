@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { transactionAPI, accountAPI, categoryAPI } from '../../services/api';
 import { Button } from '../ui/Button';
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card';
@@ -22,17 +22,7 @@ export default function CreateTransaction({ onTransactionCreated, onCancel }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    fetchAccounts();
-    fetchCategories();
-  }, []);
-
-  useEffect(() => {
-    // Refetch categories when type changes
-    fetchCategories();
-  }, [formData.type]);
-
-  const fetchAccounts = async () => {
+  const fetchAccounts = useCallback(async () => {
     try {
       const response = await accountAPI.getAll();
       setAccounts(response.data.data || []);
@@ -42,16 +32,21 @@ export default function CreateTransaction({ onTransactionCreated, onCancel }) {
     } catch (err) {
       console.error('Error fetching accounts:', err);
     }
-  };
+  }, [formData.accountId]);
 
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       const response = await categoryAPI.getAll({ type: formData.type });
       setCategories(response.data.data || []);
     } catch (err) {
       console.error('Error fetching categories:', err);
     }
-  };
+  }, [formData.type]);
+
+  useEffect(() => {
+    fetchAccounts();
+    fetchCategories();
+  }, [fetchAccounts, fetchCategories]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
