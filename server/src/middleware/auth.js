@@ -19,8 +19,18 @@ export const protect = async (req, res, next) => {
     // Get user from token
     req.user = await User.findById(decoded.id).select('-password');
     
+    if (!req.user) {
+      return res.status(401).json({ message: 'User not found' });
+    }
+    
     next();
   } catch (error) {
-    res.status(401).json({ message: 'Not authorized, token failed' });
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({ message: 'Invalid token' });
+    }
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({ message: 'Token expired' });
+    }
+    res.status(401).json({ message: 'Not authorized' });
   }
 };

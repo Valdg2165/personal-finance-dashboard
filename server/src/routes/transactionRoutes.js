@@ -3,6 +3,7 @@ import {
   importTransactions,
   getTransactions,
   getTransaction,
+  createTransaction,
   updateTransaction,
   deleteTransaction,
   uploadMiddleware
@@ -13,6 +14,7 @@ const router = express.Router();
 
 // All routes are protected
 router.post('/import', protect, uploadMiddleware, importTransactions);
+router.post('/', protect, createTransaction);
 router.get('/', protect, getTransactions);
 router.get('/:id', protect, getTransaction);
 router.put('/:id', protect, updateTransaction);

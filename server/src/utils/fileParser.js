@@ -30,12 +30,17 @@ export const parseExcel = async (fileBuffer) => {
     await workbook.xlsx.load(fileBuffer);
     
     const worksheet = workbook.worksheets[0];
+    if (!worksheet) {
+      throw new Error('No worksheet found in Excel file');
+    }
+    
     const data = [];
     
     // Get headers from first row
     const headers = [];
-    worksheet.getRow(1).eachCell((cell) => {
-      headers.push(cell.value);
+    const headerRow = worksheet.getRow(1);
+    headerRow.eachCell((cell, colNumber) => {
+      headers[colNumber - 1] = cell.value?.toString() || `Column${colNumber}`;
     });
     
     // Parse data rows
@@ -43,11 +48,20 @@ export const parseExcel = async (fileBuffer) => {
       if (rowNumber === 1) return; // Skip header row
       
       const rowData = {};
-      row.eachCell((cell, colNumber) => {
-        rowData[headers[colNumber - 1]] = cell.value;
+      let hasData = false;
+      
+      row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+        const header = headers[colNumber - 1];
+        if (header) {
+          rowData[header] = cell.value;
+          if (cell.value) hasData = true;
+        }
       });
       
-      data.push(rowData);
+      // Only add row if it contains data
+      if (hasData) {
+        data.push(rowData);
+      }
     });
     
     return data;

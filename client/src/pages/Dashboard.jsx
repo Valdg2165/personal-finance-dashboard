@@ -1,33 +1,67 @@
+import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import StatsCards from '../components/dashboard/StatsCards';
 import TransactionImport from '../components/transactions/TransactionImport';
+import CreateTransaction from '../components/transactions/CreateTransaction';
+import ConnectBank from '../components/bank/ConnectBank';
 import TransactionList from '../components/transactions/TransactionList';
-import { LogOut } from 'lucide-react';
+import SpendingTrendChart from '../components/dashboard/SpendingTrendChart';
+import CategoryBreakdownChart from '../components/dashboard/CategoryBreakdownChart';
+import MonthlyComparisonChart from '../components/dashboard/MonthlyComparisonChart';
+import { LogOut, Plus, Sun, Moon } from 'lucide-react';
 
 
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
+  const [showCreateTransaction, setShowCreateTransaction] = useState(false);
 
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
 
+  const handleTransactionCreated = () => {
+    setShowCreateTransaction(false);
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Navigation */}
-      <nav className="bg-white border-b">
+      <nav className="bg-card border-b sticky top-0 z-10 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
             <h1 className="text-xl font-bold">💰 Finance Dashboard</h1>
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-muted-foreground">
+            <div className="flex items-center gap-3">
+              <Button 
+                size="sm" 
+                onClick={() => setShowCreateTransaction(!showCreateTransaction)}
+                className="bg-green-600 hover:bg-green-700 text-white"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                New Transaction
+              </Button>
+              <span className="text-sm text-muted-foreground hidden sm:inline">
                 Welcome, {user?.firstName}!
               </span>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={toggleTheme}
+                className="p-2"
+                title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              >
+                {theme === 'dark' ? (
+                  <Sun className="h-4 w-4" />
+                ) : (
+                  <Moon className="h-4 w-4" />
+                )}
+              </Button>
               <Button variant="outline" size="sm" onClick={handleLogout}>
                 <LogOut className="h-4 w-4 mr-2" />
                 Logout
@@ -48,11 +82,28 @@ export default function Dashboard() {
         {/* Stats Cards */}
         <StatsCards />
 
-        {/* Two Column Layout */}
+        {/* Charts Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <SpendingTrendChart />
+          <CategoryBreakdownChart />
+        </div>
+
+        {/* Monthly Overview - Full Width */}
+        <MonthlyComparisonChart />
+
+        {/* Import & Transactions Section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Import Section */}
-          <div className="lg:col-span-1">
-            <TransactionImport />
+          <div className="lg:col-span-1 space-y-4">
+            {showCreateTransaction ? (
+              <CreateTransaction 
+                onTransactionCreated={handleTransactionCreated}
+                onCancel={() => setShowCreateTransaction(false)}
+              />
+            ) : (
+              <TransactionImport />
+            )}
+            <ConnectBank />
           </div>
 
           {/* Transactions List */}

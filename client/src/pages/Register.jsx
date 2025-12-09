@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
+import { Sun, Moon } from 'lucide-react';
 
 export default function Register() {
   const [formData, setFormData] = useState({
@@ -18,6 +20,7 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   
   const { register } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -68,7 +71,16 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-8">
+    <div className="min-h-screen flex items-center justify-center bg-background px-4 py-8">
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={toggleTheme}
+        className="absolute top-4 right-4"
+        title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+      >
+        {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+      </Button>
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-center">

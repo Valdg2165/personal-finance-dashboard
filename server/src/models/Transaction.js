@@ -69,4 +69,12 @@ transactionSchema.index({ user: 1, account: 1, date: -1 });
 transactionSchema.index({ user: 1, category: 1 });
 transactionSchema.index({ importHash: 1 });
 
+// Text index for full-text search
+transactionSchema.index({ 
+  description: 'text', 
+  'merchant.name': 'text', 
+  notes: 'text',
+  tags: 'text'
+});
+
 export default mongoose.model('Transaction', transactionSchema);

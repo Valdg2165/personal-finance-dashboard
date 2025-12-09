@@ -36,8 +36,10 @@ export const accountAPI = {
 export const transactionAPI = {
   getAll: (params) => api.get('/transactions', { params }),
   getOne: (id) => api.get(`/transactions/${id}`),
+  create: (data) => api.post('/transactions', data),
   update: (id, data) => api.put(`/transactions/${id}`, data),
   delete: (id) => api.delete(`/transactions/${id}`),
+  search: (query, params = {}) => api.get('/transactions', { params: { ...params, search: query } }),
   import: (formData) => {
     return api.post('/transactions/import', formData, {
       headers: {
@@ -53,6 +55,16 @@ export const budgetAPI = {
   create: (data) => api.post('/budgets', data),
   update: (id, data) => api.put(`/budgets/${id}`, data),
   delete: (id) => api.delete(`/budgets/${id}`),
+// Category endpoints
+export const categoryAPI = {
+  getAll: (params) => api.get('/categories', { params }),
+};
+
+// Add TrueLayer API
+export const truelayerAPI = {
+  connect: () => api.post('/truelayer/connect'),
+  syncAccounts: (data) => api.post('/truelayer/sync-accounts', data),
+  syncTransactions: (accountId) => api.post(`/truelayer/sync-transactions/${accountId}`),
 };
 
 export default api;
