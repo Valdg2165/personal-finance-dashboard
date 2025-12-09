@@ -5,14 +5,16 @@ import { Button } from '../components/ui/Button';
 import { useNavigate } from 'react-router-dom';
 import { budgetAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import StatsCards from '../components/dashboard/StatsCards';
-import { LogOut } from 'lucide-react';
+import { LogOut, Sun, Moon } from 'lucide-react';
 
 
 
 
 export default function BudgetPage() {
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [budgets, setBudgets] = useState([]);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ 
@@ -192,9 +194,9 @@ export default function BudgetPage() {
 
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background text-foreground transition-colors duration-200">
       {/* Navigation */}
-      <nav className="bg-white border-b">
+      <nav className="bg-card border-b sticky top-0 z-10 shadow-sm transition-colors duration-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
             <div className="flex items-center gap-4">
@@ -202,9 +204,22 @@ export default function BudgetPage() {
               <Button onClick={() => setOpen(true)} size="sm">Add a Budget</Button>
             </div>
             <div className="flex items-center gap-4">
-              <span className="text-sm text-muted-foreground">
+              <span className="text-sm text-muted-foreground hidden sm:inline">
                 Welcome, {user?.firstName}!
               </span>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={toggleTheme}
+                className="p-2"
+                title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              >
+                {theme === 'dark' ? (
+                  <Sun className="h-4 w-4" />
+                ) : (
+                  <Moon className="h-4 w-4" />
+                )}
+              </Button>
               <Button variant="outline" size="sm" onClick={handleLogout}>
                 <LogOut className="h-4 w-4 mr-2" />
                 Logout
@@ -236,12 +251,12 @@ export default function BudgetPage() {
         {/* Loading state */}
         {loading ? (
           <div className="flex justify-center items-center h-96">
-            <p className="text-center text-gray-500 text-xl font-medium">Loading budgets...</p>
+            <p className="text-center text-muted-foreground text-xl font-medium">Loading budgets...</p>
           </div>
 
         ) : budgets.length === 0 ? (
           <div className="flex justify-center items-center h-96">
-            <p className="text-center text-gray-500 text-xl font-medium">
+            <p className="text-center text-muted-foreground text-xl font-medium">
               Click on <span className="font-semibold">"Add a Budget"</span> to set up your first budget
             </p>
           </div>
@@ -268,7 +283,7 @@ export default function BudgetPage() {
               
 
               return (
-                <Card key={b._id || i} className="p-6 flex flex-col justify-center items-center min-h-48 h-auto shadow-lg text-center relative z-40">                
+                <Card key={b._id || i} className="p-6 flex flex-col justify-center items-center min-h-48 h-auto shadow-lg text-center relative z-40 bg-card transition-colors duration-200">                
                   {/* Three dots menu */}
                   <div className="absolute top-3 right-3">
                     <button
@@ -277,7 +292,7 @@ export default function BudgetPage() {
 
                         setDropdownOpen(dropdownOpen === b._id ? null : b._id);
                       }}
-                      className="text-gray-500 hover:text-gray-700 focus:outline-none"
+                      className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 focus:outline-none"
                     >
                       <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
@@ -286,7 +301,7 @@ export default function BudgetPage() {
                     
                     {/* Dropdown menu */}
                     {dropdownOpen === b._id && (
-                      <div className="absolute right-0 mt-2 w-32 bg-white rounded-md shadow-lg z-10 border border-gray-200">
+                      <div className="absolute right-0 mt-2 w-32 bg-card rounded-md shadow-lg z-10 border transition-colors duration-200">
 
                         <button
                           onClick={(e) => {
@@ -294,7 +309,7 @@ export default function BudgetPage() {
 
                             handleEdit(b);
                           }}
-                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          className="block w-full text-left px-4 py-2 text-sm hover:bg-accent transition-colors"
                         >
                           ✏️ Edit
                         </button>
@@ -304,7 +319,7 @@ export default function BudgetPage() {
 
                             handleDelete(b._id);
                           }}
-                          className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                          className="block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-accent transition-colors"
                         >
                           🗑️ Delete
                         </button>
@@ -318,16 +333,16 @@ export default function BudgetPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="flex flex-col justify-center items-center mt-2">
-                    <p className="text-md text-gray-500 font-medium">
+                    <p className="text-md text-muted-foreground font-medium">
                       {periodMonths >= 12
                         ? `${Math.floor(periodMonths / 12)} year${periodMonths >= 24 ? 's' : ''}`
                         : `${periodMonths} month${periodMonths === 1 ? '' : 's'}`}
                     </p>
 
-                    <p className="text-sm text-gray-600 font-medium mt-1">
+                    <p className="text-sm text-muted-foreground font-medium mt-1">
                       End: {b.endDate ? new Date(b.endDate).toLocaleDateString() : 'N/A'}
                     </p>
-                    <p className="text-sm text-gray-500 font-medium mt-1">
+                    <p className="text-sm text-muted-foreground font-medium mt-1">
                       {getTimeRemaining(budgetWithPeriod)} Left
                     </p>
                     
@@ -337,7 +352,7 @@ export default function BudgetPage() {
 
                     {/* Spent amount */}
                     {b.spent !== undefined && (
-                      <p className="text-sm text-gray-600 mt-1">
+                      <p className="text-sm text-muted-foreground mt-1">
                         {b.spent.toFixed(2)}€ spent
                       </p>
                     )}
@@ -352,13 +367,13 @@ export default function BudgetPage() {
                     {b.spent !== undefined && (
                       <div className="w-full mt-3">
 
-                        <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div className="w-full bg-muted rounded-full h-2">
                           <div 
                             className={`h-2 rounded-full ${remainingPercent > 50 ? 'bg-green-500' : remainingPercent > 20 ? 'bg-yellow-500' : 'bg-red-500'}`}
                             style={{ width: `${Math.min(100, (b.spent / b.amount) * 100)}%` }}
                           ></div>
                         </div>
-                        <p className="text-xs text-gray-500 text-center mt-1">
+                        <p className="text-xs text-muted-foreground text-center mt-1">
                           {((b.spent / b.amount) * 100).toFixed(0)}% used
                         </p>
                       </div>
@@ -374,17 +389,14 @@ export default function BudgetPage() {
       {/* Side panel */}
       {open ? (
         <div 
-          className="flex flex-col gap-4 overflow-y-auto"
+          className="flex flex-col gap-4 overflow-y-auto bg-card border-l transition-colors duration-200"
           style={{ 
             position: 'fixed', 
             right: 0, 
 
             top: 0, 
             width: '320px', 
-            height: '100vh', 
-            backgroundColor: 'white', 
-
-            borderLeft: '1px solid #e5e7eb',
+            height: '100vh',
             boxShadow: '-4px 0 6px -1px rgba(0, 0, 0, 0.1)',
             padding: '24px',
             zIndex: 9999 
@@ -401,9 +413,8 @@ export default function BudgetPage() {
                 value={form.category}
                 onChange={(e) => setForm({ ...form, category: e.target.value })}
                 required
-                className="block w-full appearance-none bg-white border border-gray-300 
-                  text-gray-700 py-2 px-3 pr-8 rounded-md shadow-sm 
-                  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="block w-full appearance-none bg-background border rounded-md shadow-sm py-2 px-3 pr-8
+                  focus:outline-none focus:ring-2 focus:ring-primary transition-colors"
               >
                 <option value="" disabled>Select a category</option>
                 {categories.map(c => (
@@ -432,9 +443,8 @@ export default function BudgetPage() {
                 value={form.period}
                 onChange={(e) => setForm({ ...form, period: e.target.value })}
                 required
-                className="block w-full appearance-none bg-white border border-gray-300 
-                  text-gray-700 py-2 px-3 pr-8 rounded-md shadow-sm 
-                  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="block w-full appearance-none bg-background border rounded-md shadow-sm py-2 px-3 pr-8
+                  focus:outline-none focus:ring-2 focus:ring-primary transition-colors"
               >
                 <option value="" disabled>Select a period</option>
                 <option value="1">1 month</option>
