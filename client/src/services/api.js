@@ -55,6 +55,7 @@ export const budgetAPI = {
   create: (data) => api.post('/budgets', data),
   update: (id, data) => api.put(`/budgets/${id}`, data),
   delete: (id) => api.delete(`/budgets/${id}`),
+}
 // Category endpoints
 export const categoryAPI = {
   getAll: (params) => api.get('/categories', { params }),
