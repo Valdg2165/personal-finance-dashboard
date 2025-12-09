@@ -17,7 +17,7 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: 'https://finance-software-dev-1.onrender.com/',
+  origin: 'https://finance-software-dev-1.onrender.com',
   credentials: true
 }));
 app.use(express.json());
