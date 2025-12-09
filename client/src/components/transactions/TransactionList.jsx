@@ -20,26 +20,43 @@ const formatTransactionDate = (date) => {
   }
 };
 
-export default function TransactionList() {
+// MODIFICATION 1 : Accepter la prop 'filters'
+export default function TransactionList({ filters = {} }) {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [filter, setFilter] = useState('all');
+  const [filter, setFilter] = useState('all'); // Filtre local (Income/Expense)
   const [searchQuery, setSearchQuery] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [editingTransaction, setEditingTransaction] = useState(null);
   const searchTimeoutRef = useRef(null);
 
+  // MODIFICATION 2 : Inclure la prop 'filters' dans la logique de dépendance
   const fetchTransactions = useCallback(async () => {
     try {
       setError(null);
       setLoading(true);
-      const params = {};
+
+      // Fusion des filtres locaux et globaux (prop 'filters')
+      const params = {
+        ...filters, // Filtres Date/Catégorie/etc. provenant du Dashboard
+      };
       
+      // Ajout des filtres gérés localement (Type et Recherche textuelle)
       if (filter !== 'all') params.type = filter;
-      if (searchQuery.trim()) params.search = searchQuery.trim();
+      
+      // On utilise le filtre de recherche textuelle géré en local (debounced)
+      if (searchQuery.trim()) params.search = searchQuery.trim(); 
+      
+      // Nettoyage des clés vides pour éviter des requêtes inutiles
+      Object.keys(params).forEach(key => {
+        if (params[key] === null || params[key] === '' || (Array.isArray(params[key]) && params[key].length === 0)) {
+          delete params[key];
+        }
+      });
       
       const response = await transactionAPI.getAll(params);
+      // Assurez-vous d'accéder correctement à l'array de transactions
       setTransactions(response.data.data || []);
     } catch (error) {
       console.error('Error fetching transactions:', error);
@@ -47,19 +64,21 @@ export default function TransactionList() {
     } finally {
       setLoading(false);
     }
-  }, [filter, searchQuery]);
+  }, [filter, searchQuery, filters]); // Ajout de 'filters' comme dépendance
 
+  // MODIFICATION 3 : Déclenchement de la récupération lors du changement de 'filters'
+  // On combine la dépendance à fetchTransactions avec la dépendance 'filters'
   useEffect(() => {
     fetchTransactions();
 
-    // Listen for updates
+    // Listen for updates (external events like transaction creation/update)
     const handleUpdate = () => {
       fetchTransactions();
     };
 
     window.addEventListener('transactionsUpdated', handleUpdate);
     return () => window.removeEventListener('transactionsUpdated', handleUpdate);
-  }, [fetchTransactions]);
+  }, [fetchTransactions]); // fetchTransactions dépend déjà de 'filters', donc c'est suffisant
 
   // Debounced search - trigger search after user stops typing
   useEffect(() => {
@@ -97,8 +116,9 @@ export default function TransactionList() {
   if (loading) {
     return (
       <Card>
-        <CardContent className="py-8">
-          <p className="text-center text-muted-foreground">Loading transactions...</p>
+        <CardContent className="py-8 flex justify-center items-center">
+          <Loader2 className="h-6 w-6 mr-2 animate-spin text-primary" />
+          <p className="text-muted-foreground">Loading transactions...</p>
         </CardContent>
       </Card>
     );
@@ -158,7 +178,7 @@ export default function TransactionList() {
             {/* Search Bar */}
             <form onSubmit={handleSearch} className="relative">
               <div className="relative">
-                {loading && searchQuery ? (
+                {loading && searchQuery && (searchQuery.trim() === searchInput.trim()) ? (
                   <Loader2 className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground animate-spin" />
                 ) : (
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -332,7 +352,11 @@ export default function TransactionList() {
         <TransactionEdit
           transaction={editingTransaction}
           onClose={() => setEditingTransaction(null)}
-          onSaved={() => setEditingTransaction(null)}
+          onSaved={() => {
+            setEditingTransaction(null);
+            // Déclenche un rafraîchissement des transactions après la sauvegarde
+            fetchTransactions(); 
+          }}
         />
       )}
     </>

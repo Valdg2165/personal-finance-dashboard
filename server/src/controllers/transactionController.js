@@ -56,7 +56,7 @@ export const importTransactions = async (req, res) => {
     if (fileExtension === 'csv') {
       rawData = await parseCSV(req.file.buffer);
     } else if (fileExtension === 'xlsx' || fileExtension === 'xls') {
-      rawData = await parseExcel(req.file.buffer); // Added await
+      rawData = await parseExcel(req.file.buffer);
     } else {
       return res.status(400).json({ message: 'Unsupported file format' });
     }
@@ -175,7 +175,7 @@ export const importTransactions = async (req, res) => {
   }
 };
 
-// Get all transactions
+// Get all transactions (Updated for Advanced Filters)
 export const getTransactions = async (req, res) => {
   try {
     const { accountId, startDate, endDate, category, type, limit = 100, page = 1, search } = req.query;
@@ -188,12 +188,37 @@ export const getTransactions = async (req, res) => {
     }
     
     if (accountId) filter.account = accountId;
-    if (category) filter.category = category;
+
+    // --- MISE A JOUR : FILTRE MULTI-CATEGORIES ---
+    if (category) {
+        // Si c'est un tableau (ex: ?category[]=id1&category[]=id2)
+        if (Array.isArray(category)) {
+            filter.category = { $in: category };
+        } 
+        // Si c'est une chaine avec des virgules (ex: ?category=id1,id2)
+        else if (category.includes(',')) {
+            filter.category = { $in: category.split(',') };
+        } 
+        // Si c'est une seule valeur
+        else {
+            filter.category = category;
+        }
+    }
+
     if (type) filter.type = type;
+
+    // --- MISE A JOUR : FILTRE DATE INCLUSIF ---
     if (startDate || endDate) {
       filter.date = {};
-      if (startDate) filter.date.$gte = new Date(startDate);
-      if (endDate) filter.date.$lte = new Date(endDate);
+      if (startDate) {
+        filter.date.$gte = new Date(startDate);
+      }
+      if (endDate) {
+        // On crée une date pour la fin de journée spécifiée (23:59:59.999)
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        filter.date.$lte = end;
+      }
     }
 
     const limitNum = parseInt(limit) || 100;

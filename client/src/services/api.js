@@ -34,12 +34,29 @@ export const accountAPI = {
 
 // Transaction endpoints
 export const transactionAPI = {
+  // Supporte désormais les filtres avancés :
+  // params = { 
+  //   startDate: 'YYYY-MM-DD', 
+  //   endDate: 'YYYY-MM-DD', 
+  //   category: 'id' OU ['id1', 'id2'], 
+  //   type: 'income'|'expense',
+  //   search: 'keyword' 
+  // }
   getAll: (params) => api.get('/transactions', { params }),
+  
   getOne: (id) => api.get(`/transactions/${id}`),
+  
   create: (data) => api.post('/transactions', data),
+  
   update: (id, data) => api.put(`/transactions/${id}`, data),
+  
   delete: (id) => api.delete(`/transactions/${id}`),
-  search: (query, params = {}) => api.get('/transactions', { params: { ...params, search: query } }),
+  
+  // Recherche textuelle (peut être combinée avec d'autres params comme la date)
+  search: (query, params = {}) => api.get('/transactions', { 
+    params: { ...params, search: query } 
+  }),
+  
   import: (formData) => {
     return api.post('/transactions/import', formData, {
       headers: {
@@ -55,8 +72,9 @@ export const budgetAPI = {
   create: (data) => api.post('/budgets', data),
   update: (id, data) => api.put(`/budgets/${id}`, data),
   delete: (id) => api.delete(`/budgets/${id}`),
-}
+};
 // Category endpoints
+// Category endpoints (Nécessaire pour remplir le menu déroulant des filtres)
 export const categoryAPI = {
   getAll: (params) => api.get('/categories', { params }),
 };
