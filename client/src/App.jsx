@@ -5,6 +5,7 @@ import { ThemeProvider } from './context/ThemeContext';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
+import BudgetManager from './pages/BudgetManager';
 
 // Protected Route wrapper
 const ProtectedRoute = ({ children }) => {
@@ -26,6 +27,7 @@ function App() {
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+
               <Route
                 path="/dashboard"
                 element={
@@ -34,6 +36,16 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+
+              <Route
+                path="/budget"
+                element={
+                  <ProtectedRoute>
+                    <BudgetManager />
+                  </ProtectedRoute>
+                }
+              />
+
               <Route path="/" element={<Navigate to="/dashboard" />} />
             </Routes>
           </Router>

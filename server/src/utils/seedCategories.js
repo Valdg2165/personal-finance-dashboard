@@ -1,6 +1,9 @@
 import Category from '../models/Category.js';
 
 const defaultCategories = [
+  // Budget-only category
+  { name: 'Global', type: 'expense', icon: '🪙', color: '#6b7280', budgetOnly: true },
+  
   // Income categories
   { name: 'Salary', type: 'income', icon: '💼', color: '#10b981' },
   { name: 'Freelance', type: 'income', icon: '💻', color: '#059669' },

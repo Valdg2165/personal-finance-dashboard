@@ -118,6 +118,5 @@ export const detectBankFormat = (headers) => {
     return 'revolut';
   }
   
-  // Add more bank formats here
   return 'generic';
 };

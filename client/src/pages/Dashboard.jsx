@@ -13,6 +13,8 @@ import CategoryBreakdownChart from '../components/dashboard/CategoryBreakdownCha
 import MonthlyComparisonChart from '../components/dashboard/MonthlyComparisonChart';
 import { LogOut, Plus, Sun, Moon } from 'lucide-react';
 
+
+
 export default function Dashboard() {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
@@ -64,6 +66,12 @@ export default function Dashboard() {
                 <LogOut className="h-4 w-4 mr-2" />
                 Logout
               </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => navigate('/budget')}>
+               Budget Manager
+              </Button>
             </div>
           </div>
         </div>
@@ -106,4 +114,6 @@ export default function Dashboard() {
       </main>
     </div>
   );
+
+  
 }
