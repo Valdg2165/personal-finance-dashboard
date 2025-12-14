@@ -15,11 +15,29 @@ import truelayerRoutes from './routes/truelayerRoutes.js';
 
 const app = express();
 
-// Middleware
-app.use(cors({
-  origin: 'http://localhost:5173' || 'https://finance-software-dev-fontend.onrender.com',
-  credentials: true
-}));
+const allowedOrigins = [
+    'http://localhost:5173', 
+    'https://finance-software-dev-fontend.onrender.com' // L'URL de votre frontend Render
+    // Ajoutez d'autres domaines si nécessaire
+];
+
+const corsOptions = {
+    // Si l'environnement n'est pas "production" ou "staging", nous pouvons être plus flexibles.
+    origin: (origin, callback) => {
+        // Permettre les requêtes sans 'origin' (par exemple, Postman ou requêtes serveur à serveur)
+        if (!origin) return callback(null, true);
+
+        if (allowedOrigins.indexOf(origin) !== -1) {
+            callback(null, true);
+        } else {
+            // Vous pouvez commenter cette ligne pour le débogage initial si vous êtes sûr de l'URL du frontend
+            callback(new Error('Not allowed by CORS')); 
+        }
+    },
+    credentials: true
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Routes
