@@ -17,7 +17,7 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: 'http://localhost:5173' || 'https://votre-frontend-de-production.com',
+  origin: 'http://localhost:5173' || 'https://finance-software-dev-fontend.onrender.com',
   credentials: true
 }));
 app.use(express.json());
