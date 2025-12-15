@@ -29,23 +29,24 @@ export const connectBank = async (req, res) => {
 export const handleCallback = async (req, res) => {
   try {
     const { code } = req.query;
+    const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
     
     if (!code) {
-      return res.redirect('http://localhost:5173/dashboard?error=no_code');
+      return res.redirect(`${clientUrl}/dashboard?error=no_code`);
     }
 
     // Exchange code for tokens
     const tokens = await truelayerService.exchangeCodeForToken(code);
     
     // Redirect to frontend with access token (in production, store in session/cookie)
-    const frontendUrl = `http://localhost:5173/dashboard?` +
+    const frontendUrl = `${clientUrl}/dashboard?` +
       `access_token=${tokens.accessToken}&` +
       `refresh_token=${tokens.refreshToken}`;
     
     res.redirect(frontendUrl);
   } catch (error) {
     console.error('Callback error:', error);
-    res.redirect('http://localhost:5173/dashboard?error=auth_failed');
+    res.redirect(`${clientUrl}/dashboard?error=auth_failed`);
   }
 };
 
