@@ -55,7 +55,14 @@ const accountSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Compound index
-accountSchema.index({ user: 1, externalId: 1 }, { unique: true, sparse: true });
+// Compound index - only enforce uniqueness when externalId exists (for bank-connected accounts)
+// Using partialFilterExpression to exclude null values
+accountSchema.index(
+  { user: 1, externalId: 1 }, 
+  { 
+    unique: true, 
+    partialFilterExpression: { externalId: { $type: 'string' } }
+  }
+);
 
 export default mongoose.model('Account', accountSchema);

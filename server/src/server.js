@@ -10,6 +10,8 @@ import transactionRoutes from './routes/transactionRoutes.js';
 import budgetRoutes from './routes/budgetRoutes.js';
 import categoryRoutes from './routes/categoryRoutes.js';
 import truelayerRoutes from './routes/truelayerRoutes.js';
+import recurringTransactionRoutes from './routes/recurringTransactionRoutes.js';
+import { startRecurringScheduler } from './utils/recurringScheduler.js';
 
 // import { initTrueLayer } from './services/truelayerService.js';
 
@@ -51,6 +53,7 @@ app.use('/api/transactions', transactionRoutes);
 app.use('/api/budgets', budgetRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/truelayer', truelayerRoutes);
+app.use('/api/recurring-transactions', recurringTransactionRoutes);
 
 const PORT = process.env.PORT || 3000;
 
@@ -61,5 +64,9 @@ connectDB().then(async () => {
   } catch (error) {
     console.log('TrueLayer not configured');
   }
+  
+  // Start recurring transaction scheduler
+  startRecurringScheduler();
+  
   app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 });

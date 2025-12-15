@@ -86,4 +86,14 @@ export const truelayerAPI = {
   syncTransactions: (accountId) => api.post(`/truelayer/sync-transactions/${accountId}`),
 };
 
+// Recurring Transaction endpoints
+export const recurringTransactionAPI = {
+  getAll: (params) => api.get('/recurring-transactions', { params }),
+  getOne: (id) => api.get(`/recurring-transactions/${id}`),
+  create: (data) => api.post('/recurring-transactions', data),
+  update: (id, data) => api.put(`/recurring-transactions/${id}`, data),
+  delete: (id) => api.delete(`/recurring-transactions/${id}`),
+  toggle: (id) => api.patch(`/recurring-transactions/${id}/toggle`),
+};
+
 export default api;

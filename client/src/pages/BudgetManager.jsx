@@ -227,6 +227,18 @@ export default function BudgetPage() {
               <Button
                 variant="secondary"
                 size="sm"
+                onClick={() => navigate('/accounts')}>
+                Accounts
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => navigate('/recurring')}>
+                Recurring
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={() => navigate('/dashboard')}>
                 Dashboard
               </Button>
